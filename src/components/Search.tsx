@@ -4,11 +4,11 @@ interface SearchProps {
   showCards: (str: string) => void;
 }
 
-interface ControlsState {
+interface SearchState {
   value: string;
 }
 
-class Search extends React.Component<SearchProps, ControlsState> {
+class Search extends React.Component<SearchProps, SearchState> {
   state = { value: '' };
 
   componentDidMount(): void {
@@ -48,6 +48,15 @@ class Search extends React.Component<SearchProps, ControlsState> {
           }
         >
           Search
+        </button>
+
+        <button
+          className="border border-solid cursor-pointer"
+          onClick={() => {
+            throw new Error('Error for ErrorBoundary');
+          }}
+        >
+          Test
         </button>
       </div>
     );

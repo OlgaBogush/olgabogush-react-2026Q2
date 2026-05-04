@@ -38,7 +38,6 @@ class Main extends React.Component<Record<string, never>, MainState> {
         `https://pokeapi.co/api/v2/pokemon/${str ? str : ''}`
       );
 
-      // errors
       if (res.status >= 400 && res.status < 500) {
         this.setState({
           errorMessage:
@@ -72,8 +71,6 @@ class Main extends React.Component<Record<string, never>, MainState> {
   };
 
   render(): React.ReactNode {
-    // console.log(this.state);
-
     return (
       <div className="flex flex-col gap-2">
         <Search showCards={this.showCards} />
