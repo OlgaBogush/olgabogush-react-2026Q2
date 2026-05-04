@@ -1,10 +1,14 @@
 import React from 'react';
 
+interface SearchProps {
+  searchCard: (str: string) => void;
+}
+
 interface ControlsState {
   value: string;
 }
 
-class Search extends React.Component<Record<string, never>, ControlsState> {
+class Search extends React.Component<SearchProps, ControlsState> {
   state = { value: '' };
 
   componentDidMount(): void {
@@ -30,7 +34,12 @@ class Search extends React.Component<Record<string, never>, ControlsState> {
           onChange={this.inputHandler}
         />
 
-        <button className="border border-solid cursor-pointer">Search</button>
+        <button
+          className="border border-solid cursor-pointer"
+          onClick={() => this.props.searchCard(this.state.value)}
+        >
+          Search
+        </button>
       </div>
     );
   }

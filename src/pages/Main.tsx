@@ -1,57 +1,51 @@
 import React from 'react';
 import CardsList from '../components/CardsList';
 import Search from '../components/Search';
-import Card from '../components/Card';
 
 interface DataItem {
   name: string;
   url: string;
 }
 
-interface PokemonItem {
-  id: number;
-  name: string;
-  url: string;
-}
-
 interface MainState {
   data: DataItem[];
-  pokemon: PokemonItem | null;
+  loading: boolean;
 }
 
 class Main extends React.Component<Record<string, never>, MainState> {
   state: MainState = {
     data: [],
-    pokemon: null,
+    loading: true,
   };
 
-  async componentDidMount() {
+  searchCard = (str: string) => {
+    this.setState({ loading: true });
+    setTimeout(() => {
+      fetch(`https://pokeapi.co/api/v2/pokemon/${str ? str : ''}`).then((res) =>
+        res
+          .json()
+          .then((data) => {
+            if (data?.results) {
+              this.setState({ data: data.results, loading: false });
+            } else {
+              this.setState({
+                data: [{ name: data.name, url: data.species.url }],
+                loading: false,
+              });
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          })
+      );
+    }, 3000);
+  };
+
+  componentDidMount(): void {
     const userValue: string | null = localStorage.getItem('userValue');
     if (userValue) {
-      try {
-        const response = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${userValue}`
-        );
-        const data = await response.json();
-        this.setState({
-          pokemon: {
-            id: data.id,
-            name: data.name,
-            url: data.species.url,
-          },
-        });
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      try {
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon/');
-        const data = await response.json();
-        this.setState({ data: data.results });
-      } catch (err) {
-        console.log(err);
-      }
-    }
+      this.searchCard(userValue);
+    } else this.searchCard('');
   }
 
   render(): React.ReactNode {
@@ -59,13 +53,12 @@ class Main extends React.Component<Record<string, never>, MainState> {
 
     return (
       <div className="flex flex-col gap-2">
-        <Search />
-        {!!this.state.pokemon && (
-          <div className="flex flex-wrap gap-4 p-4">
-            <Card name={this.state.pokemon.name} url={this.state.pokemon.url} />
-          </div>
+        <Search searchCard={this.searchCard} />
+        {this.state.loading ? (
+          'loading...'
+        ) : (
+          <CardsList data={this.state.data} />
         )}
-        {this.state.data.length !== 0 && <CardsList data={this.state.data} />}
       </div>
     );
   }
