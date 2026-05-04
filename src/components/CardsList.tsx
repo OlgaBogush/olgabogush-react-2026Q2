@@ -1,19 +1,22 @@
 import React from 'react';
 import Card from './Card';
 
-class CardsList extends React.Component {
+interface DataItem {
+  name: string;
+  url: string;
+}
+
+interface CardsListProps {
+  data: DataItem[];
+}
+
+class CardsList extends React.Component<CardsListProps> {
   render(): React.ReactNode {
     return (
-      <div className="flex flex-col gap-8">
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
-        <Card />
+      <div className="flex flex-wrap gap-4 p-4">
+        {this.props.data.map((item) => (
+          <Card key={item.name} name={item.name} url={item.url} />
+        ))}
       </div>
     );
   }

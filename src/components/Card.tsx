@@ -1,13 +1,16 @@
 import React from 'react';
 
-class Card extends React.Component {
+interface CardProps {
+  name: string;
+  url: string;
+}
+
+class Card extends React.Component<CardProps> {
   render(): React.ReactNode {
     return (
-      <div className="w-64 border border-solid">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Eveniet, minus
-        exercitationem! Sint commodi officia labore vitae tempore veniam
-        aliquid, culpa reprehenderit fugiat praesentium eum velit distinctio
-        itaque repellat ex odio.
+      <div className="w-64 p-4 border border-solid">
+        <h3 className="capitalize">{this.props.name}</h3>
+        <p className="text-xs">{this.props.url}</p>
       </div>
     );
   }

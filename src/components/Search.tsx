@@ -4,11 +4,8 @@ interface ControlsState {
   value: string;
 }
 
-class Controls extends React.Component<Record<string, never>, ControlsState> {
-  constructor(props: Record<string, never>) {
-    super(props);
-    this.state = { value: '' };
-  }
+class Search extends React.Component<Record<string, never>, ControlsState> {
+  state = { value: '' };
 
   componentDidMount(): void {
     const userValue: string | null = localStorage.getItem('userValue');
@@ -24,7 +21,7 @@ class Controls extends React.Component<Record<string, never>, ControlsState> {
 
   render(): React.ReactNode {
     return (
-      <div className="flex gap-8 border border-solid">
+      <div className="flex items-center gap-4 p-4">
         <input
           className="border border-solid"
           type="text"
@@ -32,9 +29,10 @@ class Controls extends React.Component<Record<string, never>, ControlsState> {
           value={this.state.value}
           onChange={this.inputHandler}
         />
-        <button>Search</button>
+
+        <button className="border border-solid cursor-pointer">Search</button>
       </div>
     );
   }
 }
-export default Controls;
+export default Search;
