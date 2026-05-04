@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface SearchProps {
-  searchCard: (str: string) => void;
+  showCards: (str: string) => void;
 }
 
 interface ControlsState {
@@ -23,6 +23,12 @@ class Search extends React.Component<SearchProps, ControlsState> {
     localStorage.setItem('userValue', e.target.value);
   };
 
+  keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      this.props.showCards(this.state.value.toLowerCase().trim());
+    }
+  };
+
   render(): React.ReactNode {
     return (
       <div className="flex items-center gap-4 p-4">
@@ -32,11 +38,14 @@ class Search extends React.Component<SearchProps, ControlsState> {
           name="name"
           value={this.state.value}
           onChange={this.inputHandler}
+          onKeyDown={this.keyDownHandler}
         />
 
         <button
           className="border border-solid cursor-pointer"
-          onClick={() => this.props.searchCard(this.state.value)}
+          onClick={() =>
+            this.props.showCards(this.state.value.toLowerCase().trim())
+          }
         >
           Search
         </button>
