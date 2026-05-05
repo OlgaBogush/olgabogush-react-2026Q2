@@ -1,26 +1,26 @@
 import React, { type ReactNode } from 'react';
 
-interface ErrorBoundaryProps {
+interface Props {
   children: ReactNode;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
+  error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
-  state = { hasError: false };
+class ErrorBoundary extends React.Component<Props, State> {
+  state = { hasError: false, error: null };
 
-  static getDerivedStateFromError = (): ErrorBoundaryState => {
-    return { hasError: true };
-  };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
 
   render() {
     if (this.state.hasError) {
-      return <h1>Что-то пошло не так.</h1>;
+      return (
+        <h1>Something went wrong. You can refresh the page to start over.</h1>
+      );
     }
     return this.props.children;
   }

@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorComponent from './ErrorComponent';
 
 interface SearchProps {
   showCards: (str: string) => void;
@@ -6,10 +7,11 @@ interface SearchProps {
 
 interface SearchState {
   value: string;
+  shouldCrash: boolean;
 }
 
 class Search extends React.Component<SearchProps, SearchState> {
-  state = { value: '' };
+  state = { value: '', shouldCrash: false };
 
   componentDidMount(): void {
     const userValue: string | null = localStorage.getItem('userValue');
@@ -32,6 +34,7 @@ class Search extends React.Component<SearchProps, SearchState> {
   render(): React.ReactNode {
     return (
       <div className="flex items-center gap-4 p-4">
+        {this.state.shouldCrash && <ErrorComponent />}
         <input
           className="border border-solid"
           type="text"
@@ -52,9 +55,7 @@ class Search extends React.Component<SearchProps, SearchState> {
 
         <button
           className="border border-solid cursor-pointer"
-          onClick={() => {
-            throw new Error('Error for ErrorBoundary');
-          }}
+          onClick={() => this.setState({ shouldCrash: true })}
         >
           Test
         </button>
