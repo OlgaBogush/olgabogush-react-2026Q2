@@ -9,11 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "husky",
-    "format:fix": "prettier --write"
+    "format:fix": "prettier --write .",
+    "format:staged": "prettier --write"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,css,md}": [
-      "npm run format:fix",
+      "npm run format:staged",
       "npm run lint"
     ]
   },

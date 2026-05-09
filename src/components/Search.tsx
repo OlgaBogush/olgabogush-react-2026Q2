@@ -22,7 +22,7 @@ class Search extends React.Component<SearchProps, SearchState> {
 
   inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ value: e.target.value });
-    localStorage.setItem('userValue', e.target.value);
+    localStorage.setItem('userValue', e.target.value.toLowerCase().trim());
   };
 
   keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -33,10 +33,10 @@ class Search extends React.Component<SearchProps, SearchState> {
 
   render(): React.ReactNode {
     return (
-      <div className="flex items-center gap-4 p-4">
+      <div className="flex items-center flex-col sm:flex-row  gap-4 p-4 border rounded-sm border-gray-300 border-solid">
         {this.state.shouldCrash && <ErrorComponent />}
         <input
-          className="border border-solid"
+          className="p-1 w-56 border rounded-sm border-gray-300 border-solid"
           type="text"
           name="name"
           value={this.state.value}
@@ -45,7 +45,7 @@ class Search extends React.Component<SearchProps, SearchState> {
         />
 
         <button
-          className="border border-solid cursor-pointer"
+          className="p-1 w-56 sm:w-30 cursor-pointer border rounded-sm border-gray-300 border-solid"
           onClick={() =>
             this.props.showCards(this.state.value.toLowerCase().trim())
           }
@@ -54,7 +54,7 @@ class Search extends React.Component<SearchProps, SearchState> {
         </button>
 
         <button
-          className="border border-solid cursor-pointer"
+          className="p-1 w-56 sm:w-30 cursor-pointer border rounded-sm border-gray-300 border-solid"
           onClick={() => this.setState({ shouldCrash: true })}
         >
           Test

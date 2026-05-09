@@ -41,16 +41,16 @@ class Main extends React.Component<Record<string, never>, MainState> {
       if (res.status >= 400 && res.status < 500) {
         this.setState({
           errorMessage:
-            'Something went wrong. Please check the entered data and try again.',
+            'A card with this name was not found. Please, check the entered data and try again.',
         });
         throw new Error(
           'Something went wrong. Check the entered data and try again.'
         );
       } else if (res.status >= 500) {
         this.setState({
-          errorMessage: 'The server has failed, please try again later.',
+          errorMessage: 'The server has failed, please, try again later.',
         });
-        throw new Error('The server has failed, please try again later.');
+        throw new Error('The server has failed, please, try again later.');
       }
 
       const data = await res.json();
@@ -72,7 +72,7 @@ class Main extends React.Component<Record<string, never>, MainState> {
 
   render(): React.ReactNode {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-6 p-6 items-center justify-center">
         <Search showCards={this.showCards} />
         {this.state.loading ? (
           <div>loading...</div>
