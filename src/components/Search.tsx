@@ -42,6 +42,7 @@ class Search extends React.Component<SearchProps, SearchState> {
           value={this.state.value}
           onChange={this.inputHandler}
           onKeyDown={this.keyDownHandler}
+          placeholder="Search Pokémon"
           autoComplete="off"
         />
 
