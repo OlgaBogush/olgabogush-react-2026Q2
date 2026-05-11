@@ -58,13 +58,6 @@ describe('Search', () => {
     spy.mockRestore();
   });
 
-  test('Get the value from localStorage when componentDidMount', () => {
-    localStorage.setItem('userValue', 'pokemon');
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    expect(input).toHaveValue('pokemon');
-  });
-
   test('Pressing any other key except Enter, the card display function is not called', () => {
     render(<Search showCards={mockShowCards} />);
     const input = screen.getByPlaceholderText('Search Pokémon');

@@ -3,7 +3,7 @@ import CardsList from '../components/CardsList';
 import Search from '../components/Search';
 import Loader from '../components/loader/Loader';
 
-interface DataItem {
+export interface DataItem {
   name: string;
   url: string;
 }
@@ -27,6 +27,7 @@ class Main extends React.Component<Record<string, never>, MainState> {
 
   componentDidMount(): void {
     const userValue: string | null = localStorage.getItem('userValue');
+
     if (userValue) {
       this.showCards(userValue.toLowerCase().trim());
     } else this.showCards('');
