@@ -88,6 +88,7 @@ describe('Main', () => {
 
   test('show error 404', async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: false,
       status: 404,
     });
     render(<Main />);
@@ -102,6 +103,7 @@ describe('Main', () => {
 
   test('show error 500', async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: false,
       status: 500,
     });
     render(<Main />);
