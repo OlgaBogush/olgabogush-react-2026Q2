@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from './Card';
 
-interface DataItem {
+export interface DataItem {
   name: string;
   url: string;
 }
