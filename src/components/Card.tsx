@@ -7,11 +7,13 @@ export interface CardProps {
 
 class Card extends React.Component<CardProps> {
   render(): React.ReactNode {
+    const urlArray = this.props.url.split('/');
+    const id = urlArray[urlArray.length - 2];
     return (
       <div className="w-64 p-4 border rounded-sm border-gray-300 border-solid">
         <div className="flex items-center justify-center">
           <img
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${this.props.url.split('/').at(-2)}.png`}
+            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}
             alt={this.props.name}
           />
         </div>
