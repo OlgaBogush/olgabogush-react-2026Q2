@@ -1,10 +1,10 @@
 import React from 'react';
 
-import styles from './Loader.module.css';
+import styles from './LoaderStyles.module.css';
 
 class Loader extends React.Component {
   render() {
-    return <span className={styles.loader}></span>;
+    return <span className={styles.loader} data-testid="loader"></span>;
   }
 }
 export default Loader;
