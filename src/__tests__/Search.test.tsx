@@ -8,6 +8,7 @@ const mockShowCards = jest.fn();
 
 describe('Search', () => {
   beforeEach(() => {
+    localStorage.clear();
     jest.clearAllMocks();
   });
 
@@ -28,21 +29,40 @@ describe('Search', () => {
     expect(input).toHaveValue('bulbasaur');
   });
 
+  // The search button AND Pressing the Enter key are working correctly
+
   test('The search button is working correctly', () => {
+    const spy = jest.spyOn(Storage.prototype, 'setItem');
     render(<Search showCards={mockShowCards} />);
     const input = screen.getByPlaceholderText('Search Pokémon');
     const searchButton = screen.getByRole('button', { name: /search/i });
-    fireEvent.change(input, { target: { value: 'charmeleon' } });
+    fireEvent.change(input, { target: { value: '     charmeleon    ' } });
     fireEvent.click(searchButton);
     expect(mockShowCards).toHaveBeenCalledWith('charmeleon');
+    // check localStorage
+    expect(spy).toHaveBeenCalledWith('userValue', 'charmeleon');
+    expect(localStorage.getItem('userValue')).toBe('charmeleon');
+    spy.mockRestore();
   });
 
   test('Pressing the Enter key works correctly', () => {
+    const spy = jest.spyOn(Storage.prototype, 'setItem');
     render(<Search showCards={mockShowCards} />);
     const input = screen.getByPlaceholderText('Search Pokémon');
-    fireEvent.change(input, { target: { value: 'kakuna' } });
+    fireEvent.change(input, { target: { value: '  kakuna  ' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
     expect(mockShowCards).toHaveBeenCalledWith('kakuna');
+    // check localStorage
+    expect(spy).toHaveBeenCalledWith('userValue', 'kakuna');
+    expect(localStorage.getItem('userValue')).toBe('kakuna');
+    spy.mockRestore();
+  });
+
+  test('Get the value from localStorage when componentDidMount', () => {
+    localStorage.setItem('userValue', 'pokemon');
+    render(<Search showCards={mockShowCards} />);
+    const input = screen.getByPlaceholderText('Search Pokémon');
+    expect(input).toHaveValue('pokemon');
   });
 
   test('Pressing any other key except Enter, the card display function is not called', () => {
