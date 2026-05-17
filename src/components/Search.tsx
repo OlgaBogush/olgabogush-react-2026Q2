@@ -7,6 +7,7 @@ interface SearchProps {
 
 interface SearchState {
   value: string;
+  cleanValue: string;
   shouldCrash: boolean;
 }
 
@@ -15,18 +16,26 @@ const Search: FC<SearchProps> = ({ showCards }) => {
     const valueFromLocalStorage: string | null =
       localStorage.getItem('userValue');
     return valueFromLocalStorage
-      ? { value: valueFromLocalStorage, shouldCrash: false }
-      : { value: '', shouldCrash: false };
+      ? {
+          value: valueFromLocalStorage,
+          cleanValue: valueFromLocalStorage,
+          shouldCrash: false,
+        }
+      : { value: '', cleanValue: '', shouldCrash: false };
   });
 
   const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setState((prev) => ({ ...prev, value: e.target.value }));
+    setState((prev) => ({
+      ...prev,
+      value: e.target.value,
+      cleanValue: e.target.value.toLowerCase().trim(),
+    }));
   };
 
   const keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      showCards(state.value.toLowerCase().trim());
-      localStorage.setItem('userValue', state.value.toLowerCase().trim());
+      showCards(state.cleanValue);
+      localStorage.setItem('userValue', state.cleanValue);
     }
   };
 
@@ -47,8 +56,8 @@ const Search: FC<SearchProps> = ({ showCards }) => {
       <button
         className="p-1 w-56 sm:w-30 cursor-pointer rounded-sm bg-green-200"
         onClick={() => {
-          showCards(state.value.toLowerCase().trim());
-          localStorage.setItem('userValue', state.value.toLowerCase().trim());
+          showCards(state.cleanValue);
+          localStorage.setItem('userValue', state.cleanValue);
         }}
       >
         Search
