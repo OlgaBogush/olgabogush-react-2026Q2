@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import CardsList from '../components/CardsList';
 import Search from '../components/Search';
 import Loader from '../components/loader/Loader';
@@ -10,92 +10,101 @@ export interface DataItem {
 
 interface MainState {
   data: DataItem[];
-  loading: boolean;
+  isLoading: boolean;
   lastQuery: string | undefined;
   errorMessage: string | undefined;
 }
 
-class Main extends React.Component<Record<string, never>, MainState> {
-  private timerId: ReturnType<typeof setTimeout> | undefined;
+const defaultState: MainState = {
+  data: [],
+  isLoading: true,
+  lastQuery: undefined,
+  errorMessage: '',
+};
 
-  state: MainState = {
-    data: [],
-    loading: true,
-    lastQuery: undefined,
-    errorMessage: '',
-  };
+const Main: FC = () => {
+  const [state, setState] = useState(defaultState);
 
-  componentDidMount(): void {
-    const userValue: string | null = localStorage.getItem('userValue');
+  const timerId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    if (userValue) {
-      this.showCards(userValue.toLowerCase().trim());
-    } else this.showCards('');
-  }
+  const showCards = async (str: string) => {
+    setState((prev) => ({
+      ...prev,
+      isLoading: true,
+      lastQuery: str,
+      errorMessage: '',
+    }));
 
-  showCards = async (str: string) => {
-    if (str === this.state.lastQuery) return;
-    if (this.timerId) clearTimeout(this.timerId);
-    this.setState({ loading: true, lastQuery: str, errorMessage: '' });
+    try {
+      const res = await fetch(
+        `https://pokeapi.co/api/v2/pokemon/${str ? str : ''}`
+      );
 
-    this.timerId = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${str ? str : ''}`
+      if (res.status >= 400 && res.status < 500) {
+        setState((prev) => ({
+          ...prev,
+          errorMessage:
+            'A card with that name was not found. Please check the entered data and try again.',
+        }));
+        throw new Error(
+          'Something went wrong. Check the entered data and try again.'
         );
-
-        if (res.status >= 400 && res.status < 500) {
-          this.setState({
-            errorMessage:
-              'A card with that name was not found. Please check the entered data and try again.',
-          });
-          throw new Error(
-            'Something went wrong. Check the entered data and try again.'
-          );
-        } else if (res.status >= 500) {
-          this.setState({
-            errorMessage: 'The server has failed, please, try again later.',
-          });
-          throw new Error('The server has failed, please, try again later.');
-        }
-
-        const data = await res.json();
-
-        if (data?.results) {
-          this.setState({ data: data.results });
-        } else {
-          this.setState({
-            data: [{ name: data.name, url: data.species.url }],
-          });
-        }
-      } catch (err) {
-        console.log(err);
-      } finally {
-        this.setState({ loading: false });
+      } else if (res.status >= 500) {
+        setState((prev) => ({
+          ...prev,
+          errorMessage: 'The server has failed, please, try again later.',
+        }));
+        throw new Error('The server has failed, please, try again later.');
       }
-    }, 1000);
+
+      const data = await res.json();
+
+      if (data?.results) {
+        setState((prev) => ({ ...prev, data: data.results }));
+      } else {
+        setState((prev) => ({
+          ...prev,
+          data: [{ name: data.name, url: data.species.url }],
+        }));
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
   };
 
-  componentWillUnmount(): void {
-    if (this.timerId) {
-      clearTimeout(this.timerId);
+  useEffect(() => {
+    const userValue: string | null = localStorage.getItem('userValue');
+    if (userValue) {
+      timerId.current = setTimeout(() => {
+        showCards(userValue.toLowerCase().trim());
+      }, 1000);
+    } else {
+      timerId.current = setTimeout(() => {
+        showCards('');
+      }, 1000);
     }
-  }
 
-  render(): React.ReactNode {
-    return (
-      <div className="flex flex-col gap-6 p-6 items-center justify-center">
-        <Search showCards={this.showCards} />
-        {this.state.loading ? (
-          <Loader />
-        ) : this.state.errorMessage ? (
-          <div>{this.state.errorMessage}</div>
-        ) : (
-          <CardsList data={this.state.data} />
-        )}
-      </div>
-    );
-  }
-}
+    return () => {
+      if (timerId.current) {
+        clearTimeout(timerId.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-6 p-6 items-center justify-center">
+      <Search showCards={showCards} />
+      {state.isLoading ? (
+        <Loader />
+      ) : state.errorMessage ? (
+        <div>{state.errorMessage}</div>
+      ) : (
+        <CardsList data={state.data} />
+      )}
+    </div>
+  );
+};
 
 export default Main;

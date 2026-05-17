@@ -1,10 +1,8 @@
-import React from 'react';
+import { FC } from 'react';
 import Main from './pages/Main';
 
-class App extends React.Component {
-  render(): React.ReactNode {
-    return <Main />;
-  }
-}
+const App: FC = () => {
+  return <Main />;
+};
 
 export default App;
