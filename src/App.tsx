@@ -1,11 +1,13 @@
 import { FC, useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useNavigate, useSearchParams } from 'react-router';
 
 import { DataItem } from './components/CardsList';
 import Main from './pages/Main';
 import Header from './pages/Header';
 import Footer from './pages/Footer';
 import Search from './components/Search';
+import showCards from './api/showCards';
+import NotFoundPage from './pages/NotFoundPage';
 
 interface ICharacter {
   id: number;
@@ -31,48 +33,59 @@ const defaultState: MainState = {
 
 const App: FC = () => {
   const [state, setState] = useState(defaultState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const showCards = async () => {
-    try {
-      const res = await fetch(`https://rickandmortyapi.com/api/character`);
+  const currentPage = Number(searchParams.get('page')) || 1;
 
-      if (res.status >= 400 && res.status < 500) {
-        throw new Error(
-          'Something went wrong. No data was found, please, try again later.'
-        );
-      } else if (res.status >= 500) {
-        throw new Error('The server has failed, please, try again later.');
-      }
-
-      const data = await res.json();
-
-      if (data?.results) {
-        return data.results;
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  useEffect(() => {
+    searchParams.set('page', '1');
+    searchParams.delete('id');
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const characters: DataItem[] = await showCards();
+        const characters: DataItem[] = await showCards(currentPage);
+        if (!characters || characters.length === 0) {
+          navigate('/error');
+          return;
+        }
         setState((prev) => ({ ...prev, data: characters }));
       } catch (err) {
         console.error(err);
+
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'An unexpected error has occurred. Please try again later.';
+
+        navigate('/error', { state: { message: errorMessage } });
+      } finally {
+        setIsLoading(false);
       }
     };
+    const timerId = setTimeout(() => {
+      fetchData();
+    }, 1000);
 
-    fetchData();
-  }, []);
+    return () => clearTimeout(timerId);
+  }, [currentPage, navigate]);
 
   return (
     <div className="flex flex-col gap-6 p-6 items-center justify-center">
       <Header />
       <Search />
       <Routes>
-        <Route index element={<Main data={state.data} />} />
+        <Route
+          path="/"
+          element={<Main data={state.data} isLoading={isLoading} />}
+        />
+        <Route path="/error" element={<NotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
     </div>
