@@ -19,7 +19,7 @@ const defaultCard: ICharacterState = {
   created: '',
 };
 
-interface SingleCardProps {
+export interface SingleCardProps {
   id: string;
   handleCloseCard: () => void;
 }
@@ -36,6 +36,7 @@ const SingleCard: FC<SingleCardProps> = ({ id, handleCloseCard }) => {
         console.error(err);
       }
     };
+
     if (id) {
       fetchCard();
     }

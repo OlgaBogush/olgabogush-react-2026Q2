@@ -43,7 +43,8 @@ const App: FC = () => {
     searchParams.set('page', '1');
     searchParams.delete('id');
     setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {

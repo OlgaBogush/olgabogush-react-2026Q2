@@ -7,7 +7,7 @@ import Loader from '../components/loader/Loader';
 import Pagination from '../components/Pagination';
 import SingleCard from '../components/SingleCard';
 
-interface MainProps {
+export interface MainProps {
   data: DataItem[];
   isLoading: boolean;
 }

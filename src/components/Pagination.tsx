@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-interface PaginationProps {
+export interface PaginationProps {
   page: number;
   setPage: (newPage: number) => void;
 }

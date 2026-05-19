@@ -32,7 +32,7 @@ const Search: FC = () => {
         value={value}
         onChange={inputHandler}
         onKeyDown={keyDownHandler}
-        placeholder="Search Pokémon"
+        placeholder="Search character"
         autoComplete="off"
       />
 

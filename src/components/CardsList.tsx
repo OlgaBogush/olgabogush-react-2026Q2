@@ -7,7 +7,7 @@ export interface DataItem {
   image: string;
 }
 
-interface CardsListProps {
+export interface CardsListProps {
   data: DataItem[];
   onCardClick: (id: number) => void;
 }
