@@ -8,6 +8,7 @@ import Footer from './pages/Footer';
 import Search from './components/Search';
 import showCards from './api/showCards';
 import NotFoundPage from './pages/NotFoundPage';
+import About from './components/About';
 
 interface ICharacter {
   id: number;
@@ -85,6 +86,7 @@ const App: FC = () => {
           path="/"
           element={<Main data={state.data} isLoading={isLoading} />}
         />
+        <Route path="/about" element={<About />} />
         <Route path="/error" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

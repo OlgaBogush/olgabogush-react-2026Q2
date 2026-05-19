@@ -58,6 +58,13 @@ jest.mock(
     }
 );
 jest.mock(
+  '../components/About',
+  () =>
+    function MockAbout() {
+      return <div data-testid="page-about">About Page</div>;
+    }
+);
+jest.mock(
   '../pages/NotFoundPage',
   () =>
     function MockNotFoundPage() {
