@@ -34,6 +34,17 @@ const Main: FC = () => {
   const navigate = useNavigate();
 
   const currentPage = Number(searchParams.get('page')) || 1;
+  const currentUserValue =
+    searchParams.get('name') || localStorage.getItem('userValue') || '';
+
+  useEffect(() => {
+    const savedValue = localStorage.getItem('userValue');
+    if (savedValue && !searchParams.has('name')) {
+      navigate(`/?page=${currentPage}&name=${encodeURIComponent(savedValue)}`, {
+        replace: true,
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,13 +69,17 @@ const Main: FC = () => {
     }, 1000);
 
     return () => clearTimeout(timerId);
-  }, [currentPage]);
+  }, [currentPage, currentUserValue]);
 
   const handlePageChange = (newPage: number) => {
     setIsLoading(true);
     setState((prev) => ({ ...prev, data: [] }));
     setErrorState(null);
-    navigate(`/?page=${newPage}`);
+    if (currentUserValue) {
+      navigate(
+        `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
+      );
+    } else navigate(`/?page=${newPage}`);
   };
 
   useEffect(() => {
@@ -72,6 +87,10 @@ const Main: FC = () => {
       navigate('/error');
     }
   }, [errorState, navigate]);
+
+  const filteredData = state.data.filter((item) =>
+    item.name.toLowerCase().includes(currentUserValue.toLowerCase())
+  );
 
   return (
     <>
@@ -82,7 +101,7 @@ const Main: FC = () => {
             <Loader />
           ) : (
             <>
-              <CardsList data={state.data} />
+              <CardsList data={filteredData} />
               <Outlet />
             </>
           )}

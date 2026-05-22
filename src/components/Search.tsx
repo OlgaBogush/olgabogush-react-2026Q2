@@ -1,17 +1,25 @@
 import { FC, useState } from 'react';
 
 import ErrorComponent from './ErrorComponent';
+import { useSearchParams } from 'react-router';
 
 const Search: FC = () => {
   const [crash, setCrash] = useState<boolean>(false);
-  const [value, setValue] = useState<string>('');
+  const [value, setValue] = useState<string>(() => {
+    return localStorage.getItem('userValue') || '';
+  });
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
   };
 
   const handleSearchSubmit = () => {
-    console.log('pol');
+    localStorage.setItem('userValue', value.toLowerCase().trim());
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      name: value.toLowerCase().trim(),
+    });
   };
 
   const keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
