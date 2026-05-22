@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react';
 
-export default function useLocaleStorage(
-  key: string,
-  defaultValue: string | (() => string)
-) {
+export function useLocaleStorage(key: string) {
   const [name, setName] = useState<string>(() => {
     const currentName = localStorage.getItem(key);
-    if (currentName !== null) return currentName;
-
-    if (typeof defaultValue === 'function') {
-      return defaultValue();
+    if (currentName !== null) {
+      return currentName;
     } else {
-      return defaultValue;
+      return '';
     }
   });
 

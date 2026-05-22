@@ -1,24 +1,24 @@
 import { FC } from 'react';
 
-export interface PaginationProps {
-  page: number;
-  setPage: (newPage: number) => void;
+interface PaginationProps {
+  currentPage: number;
+  handlePageChange: (newPage: number) => void;
 }
 
-const Pagination: FC<PaginationProps> = ({ page, setPage }) => {
+const Pagination: FC<PaginationProps> = ({ currentPage, handlePageChange }) => {
   return (
-    <div className="flex gap-4">
+    <div className="flex items-center gap-4">
       <button
-        className="p-2 bg-gray-300 rounded-sm disabled:opacity-50 cursor-pointer"
-        disabled={page <= 1}
-        onClick={() => setPage(page - 1)}
+        className="min-w-20 h-8 text-base bg-gray-300 rounded-sm disabled:opacity-50 cursor-pointer"
+        disabled={currentPage <= 1}
+        onClick={() => handlePageChange(currentPage - 1)}
       >
         prev
       </button>
-      <p className="p-2">{page}</p>
+      <p className="text-base">{currentPage}</p>
       <button
-        className="p-2 bg-gray-300 rounded-sm cursor-pointer"
-        onClick={() => setPage(page + 1)}
+        className="min-w-20 h-8 text-base bg-gray-300 rounded-sm cursor-pointer"
+        onClick={() => handlePageChange(currentPage + 1)}
       >
         next
       </button>

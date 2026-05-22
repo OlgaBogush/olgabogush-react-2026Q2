@@ -1,17 +1,14 @@
 import { FC } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 
 const NotFoundPage: FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const errorMessage = location.state?.message || 'Something went wrong.';
 
   return (
     <div className="flex flex-col w-full max-w-[1240px] mx-auto p-6 items-center gap-6 border rounded-sm border-gray-300">
-      <p>{errorMessage}</p>
+      <p>An unexpected error has occurred. Please try again later.</p>
       <button
-        className="py-1 px-2 border rounded-sm border-gray-300 cursor-pointer"
+        className="min-w-40 h-8 text-base border rounded-sm border-gray-300 cursor-pointer"
         onClick={() => navigate('/')}
       >
         Go to the main page

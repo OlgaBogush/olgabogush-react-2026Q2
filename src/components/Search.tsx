@@ -2,18 +2,16 @@ import { FC, useState } from 'react';
 
 import ErrorComponent from './ErrorComponent';
 
-import useLocaleStorage from '../hooks/useLocaleStorage';
-
 const Search: FC = () => {
-  const [value, setValue] = useLocaleStorage('userValue', '');
   const [crash, setCrash] = useState<boolean>(false);
+  const [value, setValue] = useState<string>('');
 
   const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
   };
 
   const handleSearchSubmit = () => {
-    setValue(value);
+    console.log('pol');
   };
 
   const keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -23,10 +21,10 @@ const Search: FC = () => {
   };
 
   return (
-    <div className="flex items-center flex-col sm:flex-row gap-4 p-4 border rounded-sm border-gray-300 border-solid">
+    <div className="flex justify-center items-center flex-col sm:flex-row  max-w-[1240px] mx-auto w-full p-4 gap-6 border rounded-sm border-gray-300">
       {crash && <ErrorComponent />}
       <input
-        className="p-1 w-56 border rounded-sm border-gray-300 border-solid"
+        className="w-full h-8 text-base px-2 border rounded-sm border-gray-300"
         type="text"
         name="name"
         value={value}
@@ -37,14 +35,14 @@ const Search: FC = () => {
       />
 
       <button
-        className="p-1 w-56 sm:w-30 cursor-pointer rounded-sm bg-green-200"
+        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-green-200"
         onClick={handleSearchSubmit}
       >
         Search
       </button>
 
       <button
-        className="p-1 w-56 sm:w-30 cursor-pointer rounded-sm bg-red-200"
+        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-red-200"
         onClick={() => setCrash(true)}
       >
         Test

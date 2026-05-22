@@ -14,12 +14,11 @@ const showCards = async (page: number | '') => {
 
     const data = await res.json();
 
-    if (data?.results) {
+    if (data.results) {
       return data.results;
     }
   } catch (err) {
     console.log(err);
-    throw err;
   }
 };
 

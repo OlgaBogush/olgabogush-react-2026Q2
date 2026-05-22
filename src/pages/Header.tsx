@@ -3,14 +3,14 @@ import { NavLink } from 'react-router';
 
 const Header: FC = () => {
   return (
-    <div className="w-full max-w-[1240px] mx-auto p-6  flex items-center gap-6 border rounded-sm border-gray-300">
+    <div className="w-full max-w-[1240px] mx-auto p-6 flex items-center gap-6 border rounded-sm border-gray-300">
       <h1>The Rick and Morty</h1>
       <ul className="flex gap-4">
         <li>
           <NavLink
             to={'/'}
             className={({ isActive }) =>
-              `py-1 px-2 border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
+              `flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
             }
           >
             Home
@@ -20,7 +20,7 @@ const Header: FC = () => {
           <NavLink
             to={'/about'}
             className={({ isActive }) =>
-              `py-1 px-2 border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
+              `flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
             }
           >
             About

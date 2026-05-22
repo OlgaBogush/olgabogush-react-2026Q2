@@ -1,13 +1,13 @@
 import { FC, useEffect, useState } from 'react';
 
 import showSingleCard from '../api/showSingleCard';
-import Loader from './loader/Loader';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 interface ICharacterState {
   name: string;
   status: string;
   gender: string;
-  image: string;
+  image: string | undefined;
   created: string;
 }
 
@@ -15,17 +15,17 @@ const defaultCard: ICharacterState = {
   name: '',
   status: '',
   gender: '',
-  image: '',
+  image: undefined,
   created: '',
 };
 
-export interface SingleCardProps {
-  id: string;
-  handleCloseCard: () => void;
-}
-
-const SingleCard: FC<SingleCardProps> = ({ id, handleCloseCard }) => {
+const SingleCard: FC = () => {
+  const { id } = useParams<{ id: string }>();
   const [card, setCard] = useState(defaultCard);
+  const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
 
   useEffect(() => {
     const fetchCard = async () => {
@@ -33,7 +33,7 @@ const SingleCard: FC<SingleCardProps> = ({ id, handleCloseCard }) => {
         const data: ICharacterState = await showSingleCard(Number(id));
         setCard(data);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     };
 
@@ -42,13 +42,15 @@ const SingleCard: FC<SingleCardProps> = ({ id, handleCloseCard }) => {
     }
   }, [id]);
 
-  return !card || !card.image ? (
-    <Loader />
-  ) : (
+  const closeSingleCard = () => {
+    navigate(`/?page=${currentPage}`);
+  };
+
+  return (
     <div className="relative flex flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
       <div className="flex items-center justify-center">
         <button
-          onClick={handleCloseCard}
+          onClick={closeSingleCard}
           className="absolute top-0 right-1 text-gray-300 hover:text-gray-500 font-bold text-lg cursor-pointer"
         >
           x
