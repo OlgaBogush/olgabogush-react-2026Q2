@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import '@testing-library/jest-dom';
 
 import SingleCard from '../components/SingleCard';
@@ -11,11 +12,11 @@ jest.mock('../api/showSingleCard', () => {
   };
 });
 
-jest.mock('../components/loader/Loader', () => {
-  return function MockLoader() {
-    return <div data-testid="loader">Loading...</div>;
-  };
-});
+const mockNavigate = jest.fn();
+jest.mock('react-router', () => ({
+  ...jest.requireActual('react-router'),
+  useNavigate: () => mockNavigate,
+}));
 
 const mockCardData = {
   id: 1,
@@ -27,49 +28,65 @@ const mockCardData = {
 };
 
 describe('SingleCard', () => {
-  const mockHandleClose = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('call try successfully', async () => {
-    (showSingleCard as unknown as jest.Mock).mockResolvedValue(mockCardData);
+  test('renders card successfully', async () => {
+    (showSingleCard as jest.Mock).mockResolvedValue(mockCardData);
 
-    render(<SingleCard id="1" handleCloseCard={mockHandleClose} />);
-
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    render(
+      <MemoryRouter initialEntries={['/character/1?page=3']}>
+        <Routes>
+          <Route path="/character/:id" element={<SingleCard />} />
+        </Routes>
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
-      expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
+      expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
     expect(screen.getByRole('img')).toHaveAttribute('src', mockCardData.image);
+    expect(screen.getByText('Alive')).toBeInTheDocument();
+    expect(screen.getByText('Male')).toBeInTheDocument();
+  });
+
+  test('calls navigate when close button is clicked', async () => {
+    (showSingleCard as jest.Mock).mockResolvedValue(mockCardData);
+
+    render(
+      <MemoryRouter initialEntries={['/1?page=3']}>
+        <Routes>
+          <Route path="/:id" element={<SingleCard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const closeButton = await screen.findByRole('button', { name: 'x' });
+    fireEvent.click(closeButton);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/?page=3');
   });
 
   test('error', async () => {
-    const consoleSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const mockError = new Error('Test API Error');
 
-    (showSingleCard as unknown as jest.Mock).mockRejectedValue(mockError);
+    (showSingleCard as jest.Mock).mockRejectedValue(mockError);
 
-    render(<SingleCard id="1" handleCloseCard={mockHandleClose} />);
+    render(
+      <MemoryRouter initialEntries={['/1']}>
+        <Routes>
+          <Route path="/:id" element={<SingleCard />} />
+        </Routes>
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(mockError);
     });
 
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
-
     consoleSpy.mockRestore();
-  });
-
-  test('not call fetchCard', async () => {
-    render(<SingleCard id="" handleCloseCard={mockHandleClose} />);
-
-    expect(showSingleCard).not.toHaveBeenCalled();
   });
 });

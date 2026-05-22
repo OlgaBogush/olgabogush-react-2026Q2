@@ -44,7 +44,7 @@ const Main: FC = () => {
         replace: true,
       });
     }
-  }, []);
+  }, [searchParams, navigate, currentPage]);
 
   useEffect(() => {
     const fetchData = async () => {

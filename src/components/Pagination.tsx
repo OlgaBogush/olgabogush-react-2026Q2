@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-interface PaginationProps {
+export interface PaginationProps {
   currentPage: number;
   handlePageChange: (newPage: number) => void;
 }

@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
 import Card from '../components/Card';
@@ -8,15 +9,14 @@ describe('Card Component', () => {
     id: 42,
     name: 'summer smith',
     image: 'https://rickandmortyapi.com',
-    onCardClick: jest.fn(),
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   test('render', () => {
-    render(<Card {...mockProps} />);
+    render(
+      <MemoryRouter>
+        <Card {...mockProps} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText('summer smith')).toBeInTheDocument();
 
@@ -24,18 +24,5 @@ describe('Card Component', () => {
     expect(imgElement).toBeInTheDocument();
     expect(imgElement).toHaveAttribute('src', mockProps.image);
     expect(imgElement).toHaveAttribute('alt', mockProps.name);
-  });
-
-  test('call onCardClick with id', () => {
-    render(<Card {...mockProps} />);
-
-    const cardContainer = screen.getByText('summer smith').closest('div');
-
-    if (cardContainer) {
-      fireEvent.click(cardContainer);
-    }
-
-    expect(mockProps.onCardClick).toHaveBeenCalledTimes(1);
-    expect(mockProps.onCardClick).toHaveBeenCalledWith(42);
   });
 });

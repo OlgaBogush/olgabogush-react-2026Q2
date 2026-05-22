@@ -1,28 +1,8 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
 import App from '../App';
-import showCards from '../api/showCards';
-import { MainProps } from '../pages/Main';
-
-jest.mock('../api/showCards', () => jest.fn());
-
-const mockNavigate = jest.fn();
-let mockParams = new URLSearchParams();
-const mockSetSearchParams = jest.fn((newParams) => {
-  mockParams = newParams;
-});
-
-jest.mock('react-router', () => ({
-  useNavigate: () => mockNavigate,
-  useSearchParams: () => [mockParams, mockSetSearchParams],
-  Routes: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  Route: ({ element, path }: { element: React.ReactNode; path: string }) => (
-    <div data-testid={`route-${path}`}>{element}</div>
-  ),
-}));
 
 jest.mock(
   '../pages/Header',
@@ -39,22 +19,10 @@ jest.mock(
     }
 );
 jest.mock(
-  '../components/Search',
-  () =>
-    function MockSearch() {
-      return <div data-testid="search">Search</div>;
-    }
-);
-jest.mock(
   '../pages/Main',
   () =>
-    function MockMain({ data, isLoading }: MainProps) {
-      return (
-        <div data-testid="page-main">
-          <span>Items count: {data.length}</span>
-          {isLoading && <span>Loading Status</span>}
-        </div>
-      );
+    function MockMain() {
+      return <div data-testid="page-main">Main Page</div>;
     }
 );
 jest.mock(
@@ -71,77 +39,49 @@ jest.mock(
       return <div data-testid="page-not-found">Not Found Page</div>;
     }
 );
+jest.mock(
+  '../components/SingleCard',
+  () =>
+    function MockSingleCard() {
+      return <div data-testid="single-card">Single Card</div>;
+    }
+);
 
 describe('App', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockParams = new URLSearchParams();
-    jest.useFakeTimers();
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  test('render Header and Footer', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('footer')).toBeInTheDocument();
   });
 
-  afterEach(() => {
-    jest.useRealTimers();
-    (console.error as jest.Mock).mockRestore();
+  test('render Main', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('page-main')).toBeInTheDocument();
   });
 
-  test('init url', () => {
-    render(<App />);
-
-    expect(mockSetSearchParams).toHaveBeenCalled();
+  test('render About', () => {
+    render(
+      <MemoryRouter initialEntries={['/about']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('page-about')).toBeInTheDocument();
   });
 
-  test('get data', async () => {
-    const mockCharacters = [{ id: 1, name: 'Rick', image: 'url' }];
-    (showCards as jest.Mock).mockResolvedValueOnce(mockCharacters);
-
-    render(<App />);
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(showCards).toHaveBeenCalledWith(1);
-    expect(screen.getByText('Items count: 1')).toBeInTheDocument();
-  });
-
-  test('redirect to error', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce([]);
-
-    render(<App />);
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/error');
-  });
-
-  test('catch error', async () => {
-    const mockError = new Error('API down');
-    (showCards as jest.Mock).mockRejectedValueOnce(mockError);
-
-    render(<App />);
-
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(console.error).toHaveBeenCalledWith(mockError);
-    expect(mockNavigate).toHaveBeenCalledWith('/error', {
-      state: { message: 'API down' },
-    });
+  test('render NotFound', () => {
+    render(
+      <MemoryRouter initialEntries={['/some/random-page']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('page-not-found')).toBeInTheDocument();
   });
 });

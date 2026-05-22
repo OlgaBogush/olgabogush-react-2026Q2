@@ -1,14 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
 import Search from '../components/Search';
-import useLocaleStorage from '../hooks/useLocaleStorage';
-
-jest.mock('../hooks/useLocaleStorage', () => jest.fn());
-
-const mockUseLocaleStorage = useLocaleStorage as jest.MockedFunction<
-  typeof useLocaleStorage
->;
 
 jest.mock('../components/ErrorComponent', () => {
   return function MockErrorComponent() {
@@ -17,69 +11,78 @@ jest.mock('../components/ErrorComponent', () => {
 });
 
 describe('Search', () => {
-  const mockSetValue = jest.fn();
-
   beforeEach(() => {
-    jest.clearAllMocks();
-
-    mockUseLocaleStorage.mockReturnValue(['', mockSetValue]);
+    localStorage.clear();
+    jest.spyOn(Storage.prototype, 'setItem');
   });
 
   test('render', () => {
-    mockUseLocaleStorage.mockReturnValue(['Character', mockSetValue]);
+    localStorage.setItem('userValue', 'rick');
 
-    render(<Search />);
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
 
     const input = screen.getByPlaceholderText(
       'Search character'
     ) as HTMLInputElement;
+
     expect(input).toBeInTheDocument();
-    expect(input.value).toBe('Character');
-  });
-
-  test('call setValue', () => {
-    render(<Search />);
-
-    const input = screen.getByPlaceholderText('Search character');
-
-    fireEvent.change(input, { target: { value: 'Charizard' } });
-
-    expect(mockSetValue).toHaveBeenCalledWith('Charizard');
+    expect(input.value).toBe('rick');
   });
 
   test('call handleSearchSubmit', () => {
-    mockUseLocaleStorage.mockReturnValue(['Bulbasaur', mockSetValue]);
-    render(<Search />);
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
 
+    const input = screen.getByPlaceholderText('Search character');
     const searchButton = screen.getByRole('button', { name: 'Search' });
+
+    fireEvent.change(input, { target: { value: '  Rick  ' } });
     fireEvent.click(searchButton);
 
-    expect(mockSetValue).toHaveBeenCalledWith('Bulbasaur');
+    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'rick');
   });
 
   test('call handleSearchSubmit with Enter', () => {
-    mockUseLocaleStorage.mockReturnValue(['Mewtwo', mockSetValue]);
-    render(<Search />);
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
 
     const input = screen.getByPlaceholderText('Search character');
-
+    fireEvent.change(input, { target: { value: 'morty' } });
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    expect(mockSetValue).toHaveBeenCalledWith('Mewtwo');
+    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'morty');
   });
 
   test('not call handleSearchSubmit with other keys', () => {
-    render(<Search />);
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
 
     const input = screen.getByPlaceholderText('Search character');
-
+    fireEvent.change(input, { target: { value: 'morty' } });
     fireEvent.keyDown(input, { key: 'Escape', code: 'Escape' });
 
-    expect(mockSetValue).not.toHaveBeenCalled();
+    expect(localStorage.setItem).not.toHaveBeenCalled();
   });
 
   test('show ErrorComponent with push Test button', () => {
-    render(<Search />);
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
 
     expect(screen.queryByTestId('error-component')).not.toBeInTheDocument();
 
@@ -88,5 +91,9 @@ describe('Search', () => {
     fireEvent.click(testButton);
 
     expect(screen.getByTestId('error-component')).toBeInTheDocument();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 });
