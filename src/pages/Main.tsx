@@ -39,7 +39,10 @@ const Main: FC = () => {
 
   useEffect(() => {
     const savedValue = localStorage.getItem('userValue');
-    if (savedValue && !searchParams.has('name')) {
+    const hasName = searchParams.has('name');
+    const hasPage = searchParams.has('page');
+
+    if (savedValue && !hasName && !hasPage) {
       navigate(`/?page=${currentPage}&name=${encodeURIComponent(savedValue)}`, {
         replace: true,
       });
