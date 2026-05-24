@@ -2,12 +2,11 @@ import { FC, useState } from 'react';
 
 import ErrorComponent from './ErrorComponent';
 import { useSearchParams } from 'react-router';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 const Search: FC = () => {
   const [crash, setCrash] = useState<boolean>(false);
-  const [value, setValue] = useState<string>(() => {
-    return localStorage.getItem('userValue') || '';
-  });
+  const [value, setValue] = useLocalStorage('userValue');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
