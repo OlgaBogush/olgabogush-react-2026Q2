@@ -1,26 +1,27 @@
-import React from 'react';
+import { FC } from 'react';
+import { NavLink, useSearchParams } from 'react-router';
 
 export interface CardProps {
+  id: number;
   name: string;
-  url: string;
+  image: string;
 }
 
-class Card extends React.Component<CardProps> {
-  render(): React.ReactNode {
-    const urlArray = this.props.url.split('/');
-    const id = urlArray[urlArray.length - 2];
-    return (
-      <li className="w-64 p-4 border rounded-sm border-gray-300 border-solid">
-        <div className="flex items-center justify-center">
-          <img
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}
-            alt={this.props.name}
-          />
-        </div>
-        <h3 className="capitalize">{this.props.name}</h3>
-        <p className="text-xs">{this.props.url}</p>
-      </li>
-    );
-  }
-}
-export default Card;
+export const Card: FC<CardProps> = ({ id, name, image }) => {
+  const [searchParams] = useSearchParams();
+  const currentPage = searchParams.get('page') || 1;
+
+  return (
+    <NavLink
+      to={`${id}?page=${currentPage}`}
+      className={({ isActive }) =>
+        `flex flex-col items-center w-32 p-2 gap-2 border rounded-sm border-gray-300 border-solid cursor-pointer ${isActive ? 'bg-gray-300' : ''}`
+      }
+    >
+      <div className="flex items-center justify-center">
+        <img className="rounded-sm" src={image} alt={name} />
+      </div>
+      <h3 className="text-sm capitalize">{name}</h3>
+    </NavLink>
+  );
+};

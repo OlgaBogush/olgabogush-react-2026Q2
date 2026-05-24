@@ -1,84 +1,99 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Search from '../components/Search';
-import ErrorBoundary from '../components/ErrorBoundary';
+import { Search } from '../components/Search';
 
-const mockShowCards = jest.fn();
+jest.mock('../components/ErrorComponent', () => ({
+  ErrorComponent: function MockErrorComponent() {
+    return <div data-testid="error-component">Error Occurred</div>;
+  },
+}));
 
 describe('Search', () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.clearAllMocks();
+    jest.spyOn(Storage.prototype, 'setItem');
   });
 
-  test('render input and buttons', () => {
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-    const testButton = screen.getByRole('button', { name: /test/i });
-    expect(input).toBeInTheDocument();
-    expect(searchButton).toBeInTheDocument();
-    expect(testButton).toBeInTheDocument();
-  });
+  test('render', () => {
+    localStorage.setItem('userValue', 'rick');
 
-  test('typing in the input', () => {
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    fireEvent.change(input, { target: { value: 'bulbasaur' } });
-    expect(input).toHaveValue('bulbasaur');
-  });
-
-  // The search button AND Pressing the Enter key are working correctly
-
-  test('The search button is working correctly', () => {
-    const spy = jest.spyOn(Storage.prototype, 'setItem');
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-    fireEvent.change(input, { target: { value: '     charmeleon    ' } });
-    fireEvent.click(searchButton);
-    expect(mockShowCards).toHaveBeenCalledWith('charmeleon');
-    // check localStorage
-    expect(spy).toHaveBeenCalledWith('userValue', 'charmeleon');
-    expect(localStorage.getItem('userValue')).toBe('charmeleon');
-    spy.mockRestore();
-  });
-
-  test('Pressing the Enter key works correctly', () => {
-    const spy = jest.spyOn(Storage.prototype, 'setItem');
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    fireEvent.change(input, { target: { value: '  kakuna  ' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-    expect(mockShowCards).toHaveBeenCalledWith('kakuna');
-    // check localStorage
-    expect(spy).toHaveBeenCalledWith('userValue', 'kakuna');
-    expect(localStorage.getItem('userValue')).toBe('kakuna');
-    spy.mockRestore();
-  });
-
-  test('Pressing any other key except Enter, the card display function is not called', () => {
-    render(<Search showCards={mockShowCards} />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    fireEvent.keyDown(input, { key: 'f', code: 'KeyF' });
-    expect(mockShowCards).not.toHaveBeenCalled();
-  });
-
-  test('The test button is working correctly, catches error and display fallback UI', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
     render(
-      <ErrorBoundary>
-        <Search showCards={mockShowCards} />
-      </ErrorBoundary>
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
     );
-    const testButton = screen.getByRole('button', { name: /test/i });
+
+    const input = screen.getByPlaceholderText(
+      'Search character'
+    ) as HTMLInputElement;
+
+    expect(input).toBeInTheDocument();
+    expect(input.value).toBe('rick');
+  });
+
+  test('call handleSearchSubmit', () => {
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
+
+    const input = screen.getByPlaceholderText('Search character');
+    const searchButton = screen.getByRole('button', { name: 'Search' });
+
+    fireEvent.change(input, { target: { value: '  Rick  ' } });
+    fireEvent.click(searchButton);
+
+    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'rick');
+  });
+
+  test('call handleSearchSubmit with Enter', () => {
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
+
+    const input = screen.getByPlaceholderText('Search character');
+    fireEvent.change(input, { target: { value: 'morty' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'morty');
+  });
+
+  test('not call handleSearchSubmit with other keys', () => {
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
+
+    const input = screen.getByPlaceholderText('Search character');
+    fireEvent.change(input, { target: { value: 'morty' } });
+    fireEvent.keyDown(input, { key: 'Escape', code: 'Escape' });
+
+    expect(localStorage.setItem).not.toHaveBeenCalled();
+  });
+
+  test('show ErrorComponent with push Test button', () => {
+    render(
+      <MemoryRouter>
+        <Search />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('error-component')).not.toBeInTheDocument();
+
+    const testButton = screen.getByRole('button', { name: 'Test' });
+
     fireEvent.click(testButton);
-    expect(
-      screen.getByText(
-        /An error has occurred. You can refresh the page to start over./i
-      )
-    ).toBeInTheDocument();
-    spy.mockRestore();
+
+    expect(screen.getByTestId('error-component')).toBeInTheDocument();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 });

@@ -1,68 +1,63 @@
-import React from 'react';
-import ErrorComponent from './ErrorComponent';
+import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
-interface SearchProps {
-  showCards: (str: string) => void;
-}
+import { ErrorComponent } from './ErrorComponent';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
-interface SearchState {
-  value: string;
-  shouldCrash: boolean;
-}
+export const Search: FC = () => {
+  const [crash, setCrash] = useState<boolean>(false);
+  const [value, setValue] = useLocalStorage('userValue');
+  const [searchParams, setSearchParams] = useSearchParams();
 
-class Search extends React.Component<SearchProps, SearchState> {
-  state = { value: '', shouldCrash: false };
-
-  componentDidMount(): void {
-    const userValue: string | null = localStorage.getItem('userValue');
-    if (userValue) {
-      this.setState({ value: userValue });
-    } else this.setState({ value: '' });
-  }
-
-  inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ value: e.target.value });
-    localStorage.setItem('userValue', e.target.value.toLowerCase().trim());
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
   };
 
-  keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchSubmit = () => {
+    localStorage.setItem('userValue', value.toLowerCase().trim());
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      name: value.toLowerCase().trim(),
+    });
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      this.props.showCards(this.state.value.toLowerCase().trim());
+      handleSearchSubmit();
     }
   };
 
-  render(): React.ReactNode {
-    return (
-      <div className="flex items-center flex-col sm:flex-row gap-4 p-4 border rounded-sm border-gray-300 border-solid">
-        {this.state.shouldCrash && <ErrorComponent />}
-        <input
-          className="p-1 w-56 border rounded-sm border-gray-300 border-solid"
-          type="text"
-          name="name"
-          value={this.state.value}
-          onChange={this.inputHandler}
-          onKeyDown={this.keyDownHandler}
-          placeholder="Search Pokémon"
-          autoComplete="off"
-        />
+  const handleTestClick = () => {
+    setCrash(true);
+  };
 
-        <button
-          className="p-1 w-56 sm:w-30 cursor-pointer rounded-sm bg-green-200"
-          onClick={() =>
-            this.props.showCards(this.state.value.toLowerCase().trim())
-          }
-        >
-          Search
-        </button>
+  return (
+    <div className="flex justify-center items-center flex-col sm:flex-row  max-w-[1240px] mx-auto w-full p-4 gap-6 border rounded-sm border-gray-300">
+      {crash && <ErrorComponent />}
+      <input
+        className="w-full h-8 text-base px-2 border rounded-sm border-gray-300"
+        type="text"
+        name="name"
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder="Search character"
+        autoComplete="off"
+      />
 
-        <button
-          className="p-1 w-56 sm:w-30 cursor-pointer rounded-sm bg-red-200"
-          onClick={() => this.setState({ shouldCrash: true })}
-        >
-          Test
-        </button>
-      </div>
-    );
-  }
-}
-export default Search;
+      <button
+        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-green-200"
+        onClick={handleSearchSubmit}
+      >
+        Search
+      </button>
+
+      <button
+        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-red-200"
+        onClick={handleTestClick}
+      >
+        Test
+      </button>
+    </div>
+  );
+};

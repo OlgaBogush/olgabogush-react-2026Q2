@@ -1,13 +1,9 @@
-import React from 'react';
+import { FC, useEffect } from 'react';
 
-class ErrorComponent extends React.Component {
-  componentDidMount() {
+export const ErrorComponent: FC = () => {
+  useEffect(() => {
     throw new Error('Test error for errorboundary');
-  }
+  }, []);
 
-  render(): React.ReactNode {
-    return null;
-  }
-}
-
-export default ErrorComponent;
+  return null;
+};

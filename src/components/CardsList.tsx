@@ -1,24 +1,22 @@
-import React from 'react';
-import Card from './Card';
+import { FC } from 'react';
+import { Card } from './Card';
 
 export interface DataItem {
+  id: number;
   name: string;
-  url: string;
+  image: string;
 }
 
-interface CardsListProps {
+export interface CardsListProps {
   data: DataItem[];
 }
 
-class CardsList extends React.Component<CardsListProps> {
-  render(): React.ReactNode {
-    return (
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {this.props.data.map((item) => (
-          <Card key={item.name} name={item.name} url={item.url} />
-        ))}
-      </ul>
-    );
-  }
-}
-export default CardsList;
+export const CardsList: FC<CardsListProps> = ({ data }) => {
+  return (
+    <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
+      {data.map((item) => (
+        <Card key={item.id} id={item.id} name={item.name} image={item.image} />
+      ))}
+    </ul>
+  );
+};

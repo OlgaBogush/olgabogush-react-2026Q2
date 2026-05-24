@@ -1,101 +1,125 @@
-import React from 'react';
-import CardsList from '../components/CardsList';
-import Search from '../components/Search';
-import Loader from '../components/loader/Loader';
+import { FC, useEffect, useState } from 'react';
+import { Outlet, useNavigate, useSearchParams } from 'react-router';
 
-export interface DataItem {
+import { CardsList } from '../components/CardsList';
+import { DataItem } from '../components/CardsList';
+import { Loader } from '../components/loader/Loader';
+import { Search } from '../components/Search';
+import { Pagination } from '../components/Pagination';
+import { showCards } from '../api/showCards';
+
+interface ICharacter {
+  id: number;
   name: string;
-  url: string;
+  image: string;
 }
 
 interface MainState {
   data: DataItem[];
-  loading: boolean;
+  character: ICharacter | null;
   lastQuery: string | undefined;
-  errorMessage: string | undefined;
 }
 
-class Main extends React.Component<Record<string, never>, MainState> {
-  private timerId: ReturnType<typeof setTimeout> | undefined;
+const defaultState: MainState = {
+  data: [],
+  character: null,
+  lastQuery: undefined,
+};
 
-  state: MainState = {
-    data: [],
-    loading: true,
-    lastQuery: undefined,
-    errorMessage: '',
-  };
+export const Main: FC = () => {
+  const [state, setState] = useState(defaultState);
+  const [errorState, setErrorState] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  componentDidMount(): void {
-    const userValue: string | null = localStorage.getItem('userValue');
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentUserValue =
+    searchParams.get('name') || localStorage.getItem('userValue') || '';
 
-    if (userValue) {
-      this.showCards(userValue.toLowerCase().trim());
-    } else this.showCards('');
-  }
+  useEffect(() => {
+    const savedValue = localStorage.getItem('userValue');
+    const hasName = searchParams.has('name');
+    const hasPage = searchParams.has('page');
 
-  showCards = async (str: string) => {
-    if (str === this.state.lastQuery) return;
-    if (this.timerId) clearTimeout(this.timerId);
-    this.setState({ loading: true, lastQuery: str, errorMessage: '' });
+    if (savedValue && !hasName && !hasPage) {
+      navigate(`/?page=${currentPage}&name=${encodeURIComponent(savedValue)}`, {
+        replace: true,
+      });
+    }
+  }, [searchParams, navigate, currentPage]);
 
-    this.timerId = setTimeout(async () => {
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${str ? str : ''}`
-        );
+        const characters: DataItem[] = await showCards(currentPage);
 
-        if (res.status >= 400 && res.status < 500) {
-          this.setState({
-            errorMessage:
-              'A card with that name was not found. Please check the entered data and try again.',
-          });
-          throw new Error(
-            'Something went wrong. Check the entered data and try again.'
-          );
-        } else if (res.status >= 500) {
-          this.setState({
-            errorMessage: 'The server has failed, please, try again later.',
-          });
-          throw new Error('The server has failed, please, try again later.');
+        if (!characters || characters.length === 0) {
+          throw new Error('No characters found.');
         }
 
-        const data = await res.json();
-
-        if (data?.results) {
-          this.setState({ data: data.results });
-        } else {
-          this.setState({
-            data: [{ name: data.name, url: data.species.url }],
-          });
-        }
+        setState((prev) => ({ ...prev, data: characters }));
       } catch (err) {
         console.log(err);
+        setErrorState('404 Not Found');
       } finally {
-        this.setState({ loading: false });
+        setIsLoading(false);
       }
+    };
+
+    const timerId = setTimeout(() => {
+      fetchData();
     }, 1000);
+
+    return () => clearTimeout(timerId);
+  }, [currentPage, currentUserValue]);
+
+  const handlePageChange = (newPage: number) => {
+    setIsLoading(true);
+    setState((prev) => ({ ...prev, data: [] }));
+    setErrorState(null);
+    if (currentUserValue) {
+      navigate(
+        `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
+      );
+    } else navigate(`/?page=${newPage}`);
   };
 
-  componentWillUnmount(): void {
-    if (this.timerId) {
-      clearTimeout(this.timerId);
+  useEffect(() => {
+    if (errorState) {
+      navigate('/error');
     }
-  }
+  }, [errorState, navigate]);
 
-  render(): React.ReactNode {
-    return (
-      <div className="flex flex-col gap-6 p-6 items-center justify-center">
-        <Search showCards={this.showCards} />
-        {this.state.loading ? (
-          <Loader />
-        ) : this.state.errorMessage ? (
-          <div>{this.state.errorMessage}</div>
-        ) : (
-          <CardsList data={this.state.data} />
-        )}
-      </div>
+  const filteredData = state.data.filter((item) =>
+    item.name.toLowerCase().includes(currentUserValue.toLowerCase())
+  );
+
+  let content;
+
+  if (isLoading) {
+    content = <Loader />;
+  } else {
+    content = (
+      <>
+        <CardsList data={filteredData} />
+        <Outlet />
+      </>
     );
   }
-}
 
-export default Main;
+  return (
+    <>
+      <Search />
+      <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
+        <div className=" w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
+          {content}
+        </div>
+        <Pagination
+          currentPage={currentPage}
+          handlePageChange={handlePageChange}
+        />
+      </div>
+    </>
+  );
+};

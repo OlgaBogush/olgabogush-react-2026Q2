@@ -1,19 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import CardsList, { DataItem } from '../components/CardsList';
+import { CardsList } from '../components/CardsList';
 
-describe('CardList', () => {
-  const mockArray: DataItem[] = [
-    { name: 'bulbasaur', url: 'https://pokeapi.co/api/v2/pokemon/1/' },
-    { name: 'ivysaur', url: 'https://pokeapi.co/api/v2/pokemon/2/' },
-    { name: 'venusaur', url: 'https://pokeapi.co/api/v2/pokemon/3/' },
-    { name: 'charmander', url: 'https://pokeapi.co/api/v2/pokemon/4/' },
+jest.mock('../components/Card', () => ({
+  Card: function MockCard({ name }: { name: string }) {
+    return <li>{name}</li>;
+  },
+}));
+
+describe('CardsList', () => {
+  const mockData = [
+    { id: 1, name: 'Rick Sanchez', image: 'https://rickandmortyapi.com' },
+    { id: 2, name: 'Morty Smith', image: 'https://rickandmortyapi.com' },
+    { id: 3, name: 'Summer Smith', image: 'https://rickandmortyapi.com' },
   ];
 
-  test('render cards', () => {
-    render(<CardsList data={mockArray} />);
-    const arrayOfImages = screen.getAllByRole('img');
-    expect(arrayOfImages).toHaveLength(4);
+  test('render list', () => {
+    render(<CardsList data={mockData} />);
+
+    expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
+    expect(screen.getByText('Morty Smith')).toBeInTheDocument();
+    expect(screen.getByText('Summer Smith')).toBeInTheDocument();
   });
 });

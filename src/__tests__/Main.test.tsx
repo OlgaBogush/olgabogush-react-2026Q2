@@ -1,122 +1,144 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Main from '../pages/Main';
-import { DataItem } from '../components/CardsList';
+import { Main } from '../pages/Main';
+import { showCards } from '../api/showCards';
+import { CardsListProps } from '../components/CardsList';
+import { PaginationProps } from '../components/Pagination';
+
+jest.mock('../api/showCards', () => ({ showCards: jest.fn() }));
+
+function LocationSpy({ onChange }: { onChange: (path: string) => void }) {
+  const location = useLocation();
+  onChange(location.pathname + location.search);
+  return null;
+}
+
+jest.mock('../components/Search', () => ({
+  Search: () => <div data-testid="search-mock">Search Mock</div>,
+}));
+
+jest.mock('../components/loader/Loader', () => ({
+  Loader: function MockLoader() {
+    return <div data-testid="loader">Loading...</div>;
+  },
+}));
+
+jest.mock('../components/CardsList', () => ({
+  CardsList: function MockCardsList({ data }: CardsListProps) {
+    return (
+      <div data-testid="cards-list">
+        {data.map((item) => (
+          <div key={item.id} data-testid={`card-${item.id}`}>
+            {item.name}
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
+
+jest.mock('../components/Pagination', () => ({
+  Pagination: function MockPagination({
+    currentPage,
+    handlePageChange,
+  }: PaginationProps) {
+    return (
+      <button
+        data-testid="next-page-btn"
+        onClick={() => handlePageChange(currentPage + 1)}
+      >
+        Next
+      </button>
+    );
+  },
+}));
+
+const mockData = [
+  { id: 10, name: 'Pikachu' },
+  { id: 20, name: 'Bulbasaur' },
+];
 
 describe('Main', () => {
+  let currentUrl = '';
+
+  const renderMain = (initialPath = '/') => {
+    render(
+      <MemoryRouter initialEntries={[initialPath]}>
+        <LocationSpy
+          onChange={(url) => {
+            currentUrl = url;
+          }}
+        />
+        <Routes>
+          <Route path="/" element={<Main />}>
+            <Route path="/error" element={<div>Error Page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+  };
+
+  const runTimersAndPromises = async () => {
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+  };
+
   beforeEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
     jest.useFakeTimers();
+    jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  test('get the value from localStorage when componentDidMount', () => {
-    localStorage.setItem('userValue', 'pokemon');
-    render(<Main />);
-    const input = screen.getByPlaceholderText('Search Pokémon');
-    expect(input).toHaveValue('pokemon');
+  test('Loader', async () => {
+    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
+    renderMain();
+
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
+
+    await runTimersAndPromises();
+
+    expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
+    expect(screen.getByTestId('card-10')).toHaveTextContent('Pikachu');
   });
 
-  test('the Loader appears and disappears', () => {
-    render(<Main />);
-    const loader = screen.getByTestId('loader');
-    expect(loader).toBeInTheDocument();
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    expect(loader).not.toBeInTheDocument();
-    const list = screen.getByRole('list');
-    expect(list).toBeInTheDocument();
+  test('filters cards', async () => {
+    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
+    renderMain('/?name=Pika');
+
+    await runTimersAndPromises();
+
+    expect(screen.getByTestId('card-10')).toBeInTheDocument();
+    expect(screen.queryByTestId('card-20')).not.toBeInTheDocument();
   });
 
-  test('request for an array of Pokemons', async () => {
-    const mockArayPokemons: { results: DataItem[] } = {
-      results: [
-        {
-          name: 'bulbasaur',
-          url: 'https://pokeapi.co/api/v2/pokemon/1/',
-        },
-        {
-          name: 'ivysaur',
-          url: 'https://pokeapi.co/api/v2/pokemon/2/',
-        },
-        {
-          name: 'venusaur',
-          url: 'https://pokeapi.co/api/v2/pokemon/3/',
-        },
-      ],
-    };
+  test('navigate', async () => {
+    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
+    renderMain();
+    await runTimersAndPromises();
 
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(mockArayPokemons),
-    });
+    fireEvent.click(screen.getByTestId('next-page-btn'));
 
-    render(<Main />);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    const cards = await screen.findAllByRole('listitem');
-    expect(cards).toHaveLength(3);
+    expect(currentUrl).toBe('/?page=2');
   });
 
-  test('request for a single Pokemon', async () => {
-    interface PokemonMock {
-      name: string;
-      species: {
-        url: string;
-      };
-    }
-    const mockSinglePokemon: PokemonMock = {
-      name: 'ditto',
-      species: { url: 'https://pokeapi.co/api/v2/pokemon-species/132/' },
-    };
+  test('redirect', async () => {
+    (showCards as jest.Mock).mockResolvedValueOnce([]);
+    renderMain();
 
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(mockSinglePokemon),
-    });
+    await runTimersAndPromises();
 
-    render(<Main />);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    const nameElement = await screen.findByText('ditto');
-    expect(nameElement).toBeInTheDocument();
-  });
-
-  test('show error 404', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 404,
-    });
-    render(<Main />);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    const errorElementNotFoud = await screen.findByText(
-      /A card with that name was not found. Please check the entered data and try again./i
-    );
-    expect(errorElementNotFoud).toBeInTheDocument();
-  });
-
-  test('show error 500', async () => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-    });
-    render(<Main />);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    const errorElementServer = await screen.findByText(
-      /The server has failed, please, try again later./i
-    );
-    expect(errorElementServer).toBeInTheDocument();
+    expect(currentUrl).toBe('/error');
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    (console.log as jest.Mock).mockRestore();
   });
 });

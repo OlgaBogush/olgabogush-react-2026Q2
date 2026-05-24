@@ -1,24 +1,28 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Card, { CardProps } from '../components/Card';
+import { Card } from '../components/Card';
 
-describe('Card', () => {
-  const mockData: CardProps = {
-    name: 'raticate',
-    url: 'https://pokeapi.co/api/v2/pokemon/20/',
+describe('Card Component', () => {
+  const mockProps = {
+    id: 42,
+    name: 'summer smith',
+    image: 'https://rickandmortyapi.com',
   };
 
-  test('render card', () => {
-    render(<Card name={mockData.name} url={mockData.url} />);
+  test('render', () => {
+    render(
+      <MemoryRouter>
+        <Card {...mockProps} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('summer smith')).toBeInTheDocument();
+
     const imgElement = screen.getByRole('img');
     expect(imgElement).toBeInTheDocument();
-    expect(imgElement).toHaveAttribute('alt', 'raticate');
-    const nameElement = screen.getByText(/raticate/i);
-    expect(nameElement).toBeInTheDocument();
-    const urlElement = screen.getByText(
-      'https://pokeapi.co/api/v2/pokemon/20/'
-    );
-    expect(urlElement).toBeInTheDocument();
+    expect(imgElement).toHaveAttribute('src', mockProps.image);
+    expect(imgElement).toHaveAttribute('alt', mockProps.name);
   });
 });
