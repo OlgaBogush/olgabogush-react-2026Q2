@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
 
 import ErrorComponent from './ErrorComponent';
 import { useSearchParams } from 'react-router';
@@ -9,7 +9,7 @@ const Search: FC = () => {
   const [value, setValue] = useLocalStorage('userValue');
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const inputHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
   };
 
@@ -21,10 +21,14 @@ const Search: FC = () => {
     });
   };
 
-  const keyDownHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearchSubmit();
     }
+  };
+
+  const handleTestClick = () => {
+    setCrash(true);
   };
 
   return (
@@ -35,8 +39,8 @@ const Search: FC = () => {
         type="text"
         name="name"
         value={value}
-        onChange={inputHandler}
-        onKeyDown={keyDownHandler}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
         placeholder="Search character"
         autoComplete="off"
       />
@@ -50,7 +54,7 @@ const Search: FC = () => {
 
       <button
         className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-red-200"
-        onClick={() => setCrash(true)}
+        onClick={handleTestClick}
       >
         Test
       </button>
