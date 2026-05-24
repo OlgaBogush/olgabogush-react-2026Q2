@@ -13,7 +13,9 @@ describe('NotFoundPage', () => {
     );
 
     expect(
-      screen.getByText(/An unexpected error has occurred/i)
+      screen.getByText(
+        /Something went wrong. No data was found, please, try again later./i
+      )
     ).toBeInTheDocument();
 
     expect(
