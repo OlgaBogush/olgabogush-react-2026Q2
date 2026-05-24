@@ -9,9 +9,7 @@ const showSingleCard = async (id: number) => {
     }
 
     const data = await res.json();
-    if (data) {
-      return data;
-    }
+    return data;
   } catch (err) {
     console.log(err);
   }
