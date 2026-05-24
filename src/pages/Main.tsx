@@ -95,19 +95,25 @@ const Main: FC = () => {
     item.name.toLowerCase().includes(currentUserValue.toLowerCase())
   );
 
+  let content;
+
+  if (isLoading) {
+    content = <Loader />;
+  } else {
+    content = (
+      <>
+        <CardsList data={filteredData} />
+        <Outlet />
+      </>
+    );
+  }
+
   return (
     <>
       <Search />
       <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
         <div className=" w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
-          {isLoading ? (
-            <Loader />
-          ) : (
-            <>
-              <CardsList data={filteredData} />
-              <Outlet />
-            </>
-          )}
+          {content}
         </div>
         <Pagination
           currentPage={currentPage}
