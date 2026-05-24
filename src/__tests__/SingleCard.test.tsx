@@ -2,15 +2,12 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import '@testing-library/jest-dom';
 
-import SingleCard from '../components/SingleCard';
-import showSingleCard from '../api/showSingleCard';
+import { SingleCard } from '../components/SingleCard';
+import { showSingleCard } from '../api/showSingleCard';
 
-jest.mock('../api/showSingleCard', () => {
-  return {
-    __esModule: true,
-    default: jest.fn(),
-  };
-});
+jest.mock('../api/showSingleCard', () => ({
+  showSingleCard: jest.fn(),
+}));
 
 const mockNavigate = jest.fn();
 jest.mock('react-router', () => ({

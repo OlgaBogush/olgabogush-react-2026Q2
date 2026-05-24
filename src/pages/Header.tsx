@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { NavLink } from 'react-router';
 
-const Header: FC = () => {
+export const Header: FC = () => {
   return (
     <div className="w-full max-w-[1240px] mx-auto p-6 flex items-center gap-6 border rounded-sm border-gray-300">
       <h1>The Rick and Morty</h1>
@@ -30,5 +30,3 @@ const Header: FC = () => {
     </div>
   );
 };
-
-export default Header;

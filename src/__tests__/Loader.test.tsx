@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import Loader from '../components/loader/Loader';
+import { Loader } from '../components/loader/Loader';
 
 test('Loader', () => {
   render(<Loader />);

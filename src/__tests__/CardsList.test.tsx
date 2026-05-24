@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import CardsList from '../components/CardsList';
+import { CardsList } from '../components/CardsList';
 
-jest.mock('../components/Card', () => {
-  return function MockCard({ name }: { name: string }) {
+jest.mock('../components/Card', () => ({
+  Card: function MockCard({ name }: { name: string }) {
     return <li>{name}</li>;
-  };
-});
+  },
+}));
 
 describe('CardsList', () => {
   const mockData = [

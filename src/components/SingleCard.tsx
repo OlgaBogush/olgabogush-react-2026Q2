@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 
-import showSingleCard from '../api/showSingleCard';
+import { showSingleCard } from '../api/showSingleCard';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 interface ICharacterState {
@@ -19,7 +19,7 @@ const defaultCard: ICharacterState = {
   created: '',
 };
 
-const SingleCard: FC = () => {
+export const SingleCard: FC = () => {
   const { id } = useParams<{ id: string }>();
   const [card, setCard] = useState(defaultCard);
   const navigate = useNavigate();
@@ -72,5 +72,3 @@ const SingleCard: FC = () => {
     </div>
   );
 };
-
-export default SingleCard;

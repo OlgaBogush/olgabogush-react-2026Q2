@@ -1,10 +1,10 @@
 import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
-
-import ErrorComponent from './ErrorComponent';
 import { useSearchParams } from 'react-router';
+
+import { ErrorComponent } from './ErrorComponent';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
-const Search: FC = () => {
+export const Search: FC = () => {
   const [crash, setCrash] = useState<boolean>(false);
   const [value, setValue] = useLocalStorage('userValue');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,5 +61,3 @@ const Search: FC = () => {
     </div>
   );
 };
-
-export default Search;

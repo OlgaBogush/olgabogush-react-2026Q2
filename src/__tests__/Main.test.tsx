@@ -2,12 +2,12 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Main from '../pages/Main';
-import showCards from '../api/showCards';
+import { Main } from '../pages/Main';
+import { showCards } from '../api/showCards';
 import { CardsListProps } from '../components/CardsList';
 import { PaginationProps } from '../components/Pagination';
 
-jest.mock('../api/showCards', () => jest.fn());
+jest.mock('../api/showCards', () => ({ showCards: jest.fn() }));
 
 function LocationSpy({ onChange }: { onChange: (path: string) => void }) {
   const location = useLocation();
@@ -15,55 +15,45 @@ function LocationSpy({ onChange }: { onChange: (path: string) => void }) {
   return null;
 }
 
-jest.mock(
-  '../components/Search',
-  () =>
-    function MockSearch() {
-      return <div>Search</div>;
-    }
-);
+jest.mock('../components/Search', () => ({
+  Search: () => <div data-testid="search-mock">Search Mock</div>,
+}));
 
-jest.mock(
-  '../components/loader/Loader',
-  () =>
-    function MockLoader() {
-      return <div data-testid="loader">Loading...</div>;
-    }
-);
+jest.mock('../components/loader/Loader', () => ({
+  Loader: function MockLoader() {
+    return <div data-testid="loader">Loading...</div>;
+  },
+}));
 
-jest.mock(
-  '../components/CardsList',
-  () =>
-    function MockCardsList({ data }: CardsListProps) {
-      return (
-        <div data-testid="cards-list">
-          {data.map((item) => (
-            <div key={item.id} data-testid={`card-${item.id}`}>
-              {item.name}
-            </div>
-          ))}
-        </div>
-      );
-    }
-);
+jest.mock('../components/CardsList', () => ({
+  CardsList: function MockCardsList({ data }: CardsListProps) {
+    return (
+      <div data-testid="cards-list">
+        {data.map((item) => (
+          <div key={item.id} data-testid={`card-${item.id}`}>
+            {item.name}
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
 
-jest.mock(
-  '../components/Pagination',
-  () =>
-    function MockPagination({
-      currentPage,
-      handlePageChange,
-    }: PaginationProps) {
-      return (
-        <button
-          data-testid="next-page-btn"
-          onClick={() => handlePageChange(currentPage + 1)}
-        >
-          Next
-        </button>
-      );
-    }
-);
+jest.mock('../components/Pagination', () => ({
+  Pagination: function MockPagination({
+    currentPage,
+    handlePageChange,
+  }: PaginationProps) {
+    return (
+      <button
+        data-testid="next-page-btn"
+        onClick={() => handlePageChange(currentPage + 1)}
+      >
+        Next
+      </button>
+    );
+  },
+}));
 
 const mockData = [
   { id: 10, name: 'Pikachu' },

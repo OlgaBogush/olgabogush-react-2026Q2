@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router';
 
-import Footer from '../pages/Footer';
+import { Footer } from '../pages/Footer';
 
 describe('Footer', () => {
   test('render', () => {

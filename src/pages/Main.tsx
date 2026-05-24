@@ -1,12 +1,12 @@
 import { FC, useEffect, useState } from 'react';
 import { Outlet, useNavigate, useSearchParams } from 'react-router';
 
-import CardsList from '../components/CardsList';
+import { CardsList } from '../components/CardsList';
 import { DataItem } from '../components/CardsList';
-import Loader from '../components/loader/Loader';
-import Search from '../components/Search';
-import Pagination from '../components/Pagination';
-import showCards from '../api/showCards';
+import { Loader } from '../components/loader/Loader';
+import { Search } from '../components/Search';
+import { Pagination } from '../components/Pagination';
+import { showCards } from '../api/showCards';
 
 interface ICharacter {
   id: number;
@@ -26,7 +26,7 @@ const defaultState: MainState = {
   lastQuery: undefined,
 };
 
-const Main: FC = () => {
+export const Main: FC = () => {
   const [state, setState] = useState(defaultState);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,5 +123,3 @@ const Main: FC = () => {
     </>
   );
 };
-
-export default Main;

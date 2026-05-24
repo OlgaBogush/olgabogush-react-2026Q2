@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import ErrorBoundary from '../components/ErrorBoundary';
-import ErrorComponent from '../components/ErrorComponent';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorComponent } from '../components/ErrorComponent';
 
 describe('ErrorBoundary', () => {
   let consoleSpy: jest.SpyInstance;

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router';
 
-import Header from '../pages/Header';
+import { Header } from '../pages/Header';
 
 describe('Header', () => {
   test('render', () => {

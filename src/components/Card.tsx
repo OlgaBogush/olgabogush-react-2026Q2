@@ -7,7 +7,7 @@ export interface CardProps {
   image: string;
 }
 
-const Card: FC<CardProps> = ({ id, name, image }) => {
+export const Card: FC<CardProps> = ({ id, name, image }) => {
   const [searchParams] = useSearchParams();
   const currentPage = searchParams.get('page') || 1;
 
@@ -25,5 +25,3 @@ const Card: FC<CardProps> = ({ id, name, image }) => {
     </NavLink>
   );
 };
-
-export default Card;

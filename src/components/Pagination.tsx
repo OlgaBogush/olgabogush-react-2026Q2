@@ -5,7 +5,10 @@ export interface PaginationProps {
   handlePageChange: (newPage: number) => void;
 }
 
-const Pagination: FC<PaginationProps> = ({ currentPage, handlePageChange }) => {
+export const Pagination: FC<PaginationProps> = ({
+  currentPage,
+  handlePageChange,
+}) => {
   return (
     <div className="flex items-center gap-4">
       <button
@@ -25,5 +28,3 @@ const Pagination: FC<PaginationProps> = ({ currentPage, handlePageChange }) => {
     </div>
   );
 };
-
-export default Pagination;

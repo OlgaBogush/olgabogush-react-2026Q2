@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { Link } from 'react-router';
 
-const About: FC = () => {
+export const About: FC = () => {
   return (
     <div className="w-full max-w-[1240px] mx-auto p-6  items-center gap-6 border rounded-sm border-gray-300">
       <div>
@@ -25,5 +25,3 @@ const About: FC = () => {
     </div>
   );
 };
-
-export default About;

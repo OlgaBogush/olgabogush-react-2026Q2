@@ -1,4 +1,4 @@
-import showSingleCard from '../api/showSingleCard';
+import { showSingleCard } from '../api/showSingleCard';
 
 const mockFetch = jest.fn() as jest.MockedFunction<typeof globalThis.fetch>;
 

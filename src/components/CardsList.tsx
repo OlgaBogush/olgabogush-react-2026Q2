@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import Card from './Card';
+import { Card } from './Card';
 
 export interface DataItem {
   id: number;
@@ -11,7 +11,7 @@ export interface CardsListProps {
   data: DataItem[];
 }
 
-const CardsList: FC<CardsListProps> = ({ data }) => {
+export const CardsList: FC<CardsListProps> = ({ data }) => {
   return (
     <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
       {data.map((item) => (
@@ -20,5 +20,3 @@ const CardsList: FC<CardsListProps> = ({ data }) => {
     </ul>
   );
 };
-
-export default CardsList;

@@ -1,4 +1,4 @@
-import showCards from '../api/showCards';
+import { showCards } from '../api/showCards';
 
 describe('showCards', () => {
   let fetchSpy: jest.SpyInstance;

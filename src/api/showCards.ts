@@ -1,4 +1,4 @@
-const showCards = async (page: number | '') => {
+export const showCards = async (page: number | '') => {
   const res = await fetch(
     `https://rickandmortyapi.com/api/character/?page=${page}`
   );
@@ -17,5 +17,3 @@ const showCards = async (page: number | '') => {
     return data.results;
   }
 };
-
-export default showCards;

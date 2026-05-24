@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Card from '../components/Card';
+import { Card } from '../components/Card';
 
 describe('Card Component', () => {
   const mockProps = {

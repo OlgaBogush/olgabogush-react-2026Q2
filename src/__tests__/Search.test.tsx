@@ -2,13 +2,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import '@testing-library/jest-dom';
 
-import Search from '../components/Search';
+import { Search } from '../components/Search';
 
-jest.mock('../components/ErrorComponent', () => {
-  return function MockErrorComponent() {
+jest.mock('../components/ErrorComponent', () => ({
+  ErrorComponent: function MockErrorComponent() {
     return <div data-testid="error-component">Error Occurred</div>;
-  };
-});
+  },
+}));
 
 describe('Search', () => {
   beforeEach(() => {

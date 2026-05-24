@@ -1,4 +1,4 @@
-const showSingleCard = async (id: number) => {
+export const showSingleCard = async (id: number) => {
   try {
     const res = await fetch(`https://rickandmortyapi.com/api/character/${id}`);
 
@@ -14,5 +14,3 @@ const showSingleCard = async (id: number) => {
     console.log(err);
   }
 };
-
-export default showSingleCard;
