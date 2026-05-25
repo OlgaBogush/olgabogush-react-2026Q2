@@ -16,14 +16,34 @@ export const Favourites: FC<FavouritesProps> = ({ favourites }) => {
     return null;
   }
   const { isDarkTheme } = context;
+  if (!favourites || favourites.length === 0) return null;
 
   const handleRemoveButton = () => {
     dispatch(removeAllItems());
   };
 
-  const handleDownloadButton = () => {};
+  const handleDownloadButton = (): void => {
+    const headers = ['ID', 'Name', 'Image URL'].join(',');
+    const rows = favourites.map(
+      (item) => `${item.id},"${item.name}","${item.image}"`
+    );
+    const csvData = '\uFEFF' + [headers, ...rows].join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
 
-  if (!favourites || favourites.length === 0) return null;
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+
+    link.setAttribute('download', `${favourites.length}_items.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div
