@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router';
 
 import { Header } from '../pages/Header';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../context/ThemeContext';
 
 describe('Header', () => {
   test('render', () => {
