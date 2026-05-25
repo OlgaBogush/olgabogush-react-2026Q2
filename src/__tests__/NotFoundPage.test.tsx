@@ -8,13 +8,14 @@ import '@testing-library/jest-dom';
 
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { AppStore } from '../app/store';
+import { favouritesReducer } from '../features/favourites/favouritesSlice';
 
 describe('NotFoundPage', () => {
   let store: AppStore;
 
   beforeEach(() => {
     store = configureStore({
-      reducer: { cards: cardsReducer },
+      reducer: { cards: cardsReducer, favourites: favouritesReducer },
     });
   });
 
