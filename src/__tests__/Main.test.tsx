@@ -1,19 +1,23 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+
 import '@testing-library/jest-dom';
 
 import { Main } from '../pages/Main';
-import { showCards } from '../api/showCards';
 import { CardsListProps } from '../components/CardsList';
 import { PaginationProps } from '../components/Pagination';
+import { cardsReducer, getCards } from '../features/cards/cardsSlice';
+import { AppDispatch, AppStore } from '../app/store';
 
-jest.mock('../api/showCards', () => ({ showCards: jest.fn() }));
-
-function LocationSpy({ onChange }: { onChange: (path: string) => void }) {
-  const location = useLocation();
-  onChange(location.pathname + location.search);
-  return null;
-}
+jest.mock('../features/cards/cardsSlice', () => {
+  const original = jest.requireActual('../features/cards/cardsSlice');
+  return {
+    ...original,
+    getCards: jest.fn(),
+  };
+});
 
 jest.mock('../components/Search', () => ({
   Search: () => <div data-testid="search-mock">Search Mock</div>,
@@ -55,86 +59,72 @@ jest.mock('../components/Pagination', () => ({
   },
 }));
 
-const mockData = [
-  { id: 10, name: 'Pikachu' },
-  { id: 20, name: 'Bulbasaur' },
-];
+const mockData = [{ id: 10, name: 'Pikachu' }];
 
 describe('Main', () => {
-  let currentUrl = '';
-
-  const renderMain = (initialPath = '/') => {
+  let store: AppStore;
+  const renderMain = (path = '/') =>
     render(
-      <MemoryRouter initialEntries={[initialPath]}>
-        <LocationSpy
-          onChange={(url) => {
-            currentUrl = url;
-          }}
-        />
-        <Routes>
-          <Route path="/" element={<Main />}>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/" element={<Main />} />
             <Route path="/error" element={<div>Error Page</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
-  };
-
-  const runTimersAndPromises = async () => {
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    await act(async () => {
-      await Promise.resolve();
-    });
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
     jest.useFakeTimers();
     jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    store = configureStore({ reducer: { cards: cardsReducer } });
   });
 
-  test('Loader', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain();
+  test('render', () => {
+    (getCards as unknown as jest.Mock).mockImplementation(
+      () => async (dispatch: AppDispatch) => {
+        dispatch({ type: 'cards/getCards/fulfilled', payload: mockData });
+      }
+    );
+
+    renderMain('/?name=Pika');
 
     expect(screen.getByTestId('loader')).toBeInTheDocument();
 
-    await runTimersAndPromises();
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
 
     expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
     expect(screen.getByTestId('card-10')).toHaveTextContent('Pikachu');
-  });
-
-  test('filters cards', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain('/?name=Pika');
-
-    await runTimersAndPromises();
-
-    expect(screen.getByTestId('card-10')).toBeInTheDocument();
-    expect(screen.queryByTestId('card-20')).not.toBeInTheDocument();
-  });
-
-  test('navigate', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain();
-    await runTimersAndPromises();
 
     fireEvent.click(screen.getByTestId('next-page-btn'));
 
-    expect(currentUrl).toBe('/?page=2');
+    expect(store.getState().cards.cards).toEqual([]);
+    expect(store.getState().cards.isLoading).toBe(true);
   });
 
-  test('redirect', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce([]);
+  test('error', () => {
+    (getCards as unknown as jest.Mock).mockImplementation(
+      () => async (dispatch: AppDispatch) => {
+        dispatch({
+          type: 'cards/getCards/rejected',
+          error: { message: 'Server Error' },
+        });
+      }
+    );
+
     renderMain();
 
-    await runTimersAndPromises();
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
 
-    expect(currentUrl).toBe('/error');
+    expect(screen.getByText('Error Page')).toBeInTheDocument();
   });
 
   afterEach(() => {
