@@ -1,7 +1,11 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DataItem } from '../../components/CardsList';
 
-export const getCards = createAsyncThunk(
+interface ThunkConfig {
+  rejectValue: string;
+}
+
+export const getCards = createAsyncThunk<DataItem[], number, ThunkConfig>(
   'cards/getCards',
   async (page: number, thunkAPI) => {
     try {
@@ -54,13 +58,16 @@ export const cardsSlice = createSlice({
       state.isLoading = true;
       state.errorState = null;
     });
-    builder.addCase(getCards.fulfilled, (state, { payload }) => {
-      state.cards = payload;
+    builder.addCase(
+      getCards.fulfilled,
+      (state, { payload }: PayloadAction<DataItem[]>) => {
+        state.cards = payload;
+        state.isLoading = false;
+      }
+    );
+    builder.addCase(getCards.rejected, (state, { payload }) => {
       state.isLoading = false;
-    });
-    builder.addCase(getCards.rejected, (state, { error }) => {
-      state.isLoading = false;
-      state.errorState = error.message || 'Unknown error';
+      state.errorState = payload || 'Unknown error';
     });
   },
 });

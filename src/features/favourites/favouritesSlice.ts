@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DataItem } from '../../components/CardsList';
 
 export interface FavouritesState {
@@ -13,7 +13,8 @@ export const favouritesSlice = createSlice({
   name: 'favourites',
   initialState,
   reducers: {
-    addItemToFavourites: (state, { payload }) => {
+    addItemToFavourites: (state, action: PayloadAction<DataItem>) => {
+      const { payload } = action;
       const found = state.favourites.find((item) => item.id === payload.id);
       if (!found) {
         state.favourites.push(payload);
