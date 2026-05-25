@@ -23,8 +23,11 @@ export const favouritesSlice = createSlice({
           (item) => item.id !== payload.id
         );
     },
+    removeAllItems: (state) => {
+      state.favourites = [];
+    },
   },
 });
 
-export const { addItemToFavourites } = favouritesSlice.actions;
+export const { addItemToFavourites, removeAllItems } = favouritesSlice.actions;
 export const favouritesReducer = favouritesSlice.reducer;
