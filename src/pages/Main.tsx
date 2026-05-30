@@ -6,7 +6,8 @@ import { Loader } from '../components/loader/Loader';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { getCards, resetCardsState } from '../features/cards/cardsSlice';
+import { resetCardsState } from '../features/cards/cardsSlice';
+import { getCards } from '../utils/getCards';
 
 export const Main: FC = () => {
   const { cards, errorState, isLoading } = useAppSelector(

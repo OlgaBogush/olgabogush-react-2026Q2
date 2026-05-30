@@ -8,15 +8,24 @@ import '@testing-library/jest-dom';
 import { Main } from '../pages/Main';
 import { CardsListProps } from '../components/CardsList';
 import { PaginationProps } from '../components/Pagination';
-import { cardsReducer, getCards } from '../features/cards/cardsSlice';
+import { cardsReducer } from '../features/cards/cardsSlice';
 import { AppStore } from '../app/store';
 import { favouritesReducer } from '../features/favourites/favouritesSlice';
+import { getCards } from '../utils/getCards';
 
-jest.mock('../features/cards/cardsSlice', () => {
-  const original = jest.requireActual('../features/cards/cardsSlice');
+jest.mock('../utils/getCards', () => {
+  const original = jest.requireActual('../utils/getCards');
+  const mockFn = jest.fn();
+
+  const mockGetCards = Object.assign(mockFn, {
+    pending: 'cards/getCards/pending' as const,
+    fulfilled: 'cards/getCards/fulfilled' as const,
+    rejected: 'cards/getCards/rejected' as const,
+  });
+
   return {
     ...original,
-    getCards: jest.fn(),
+    getCards: mockGetCards,
   };
 });
 
