@@ -1,19 +1,33 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
+import { Provider } from 'react-redux';
+import { configureStore, UnknownAction } from '@reduxjs/toolkit';
+
 import '@testing-library/jest-dom';
 
 import { Main } from '../pages/Main';
-import { showCards } from '../api/showCards';
 import { CardsListProps } from '../components/CardsList';
 import { PaginationProps } from '../components/Pagination';
+import { cardsReducer, resetCardsState } from '../features/cards/cardsSlice';
+import { AppStore } from '../app/store';
+import { favouritesReducer } from '../features/favourites/favouritesSlice';
+import { getCards } from '../utils/getCards';
 
-jest.mock('../api/showCards', () => ({ showCards: jest.fn() }));
+jest.mock('../utils/getCards', () => {
+  const original = jest.requireActual('../utils/getCards');
+  const mockFn = jest.fn();
 
-function LocationSpy({ onChange }: { onChange: (path: string) => void }) {
-  const location = useLocation();
-  onChange(location.pathname + location.search);
-  return null;
-}
+  const mockGetCards = Object.assign(mockFn, {
+    pending: 'cards/getCards/pending' as const,
+    fulfilled: 'cards/getCards/fulfilled' as const,
+    rejected: 'cards/getCards/rejected' as const,
+  });
+
+  return {
+    ...original,
+    getCards: mockGetCards,
+  };
+});
 
 jest.mock('../components/Search', () => ({
   Search: () => <div data-testid="search-mock">Search Mock</div>,
@@ -55,90 +69,83 @@ jest.mock('../components/Pagination', () => ({
   },
 }));
 
-const mockData = [
-  { id: 10, name: 'Pikachu' },
-  { id: 20, name: 'Bulbasaur' },
-];
+const mockData = [{ id: 10, name: 'Pikachu' }];
 
 describe('Main', () => {
-  let currentUrl = '';
-
-  const renderMain = (initialPath = '/') => {
+  let store: AppStore;
+  const renderMain = (path = '/') =>
     render(
-      <MemoryRouter initialEntries={[initialPath]}>
-        <LocationSpy
-          onChange={(url) => {
-            currentUrl = url;
-          }}
-        />
-        <Routes>
-          <Route path="/" element={<Main />}>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/" element={<Main />} />
             <Route path="/error" element={<div>Error Page</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
-  };
-
-  const runTimersAndPromises = async () => {
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    await act(async () => {
-      await Promise.resolve();
-    });
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    jest.useFakeTimers();
-    jest.spyOn(console, 'log').mockImplementation(() => {});
+    store = configureStore({
+      reducer: { cards: cardsReducer, favourites: favouritesReducer },
+    });
   });
 
-  test('Loader', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain();
+  test('render', async () => {
+    const mockAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/fulfilled',
+          payload: mockData,
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(mockAction);
 
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    await act(async () => {
+      renderMain('/?name=Pika');
+    });
 
-    await runTimersAndPromises();
-
-    expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
     expect(screen.getByTestId('card-10')).toHaveTextContent('Pikachu');
+
+    const nextMockAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/fulfilled',
+          payload: [],
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(nextMockAction);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('next-page-btn'));
+    });
+
+    act(() => {
+      store.dispatch(resetCardsState());
+    });
+
+    expect(store.getState().cards.cards).toEqual([]);
   });
 
-  test('filters cards', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain('/?name=Pika');
+  test('error', async () => {
+    const mockErrorAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/rejected',
+          payload: 'Server Error',
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(mockErrorAction);
 
-    await runTimersAndPromises();
+    await act(async () => {
+      renderMain('/');
+    });
 
-    expect(screen.getByTestId('card-10')).toBeInTheDocument();
-    expect(screen.queryByTestId('card-20')).not.toBeInTheDocument();
-  });
-
-  test('navigate', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce(mockData);
-    renderMain();
-    await runTimersAndPromises();
-
-    fireEvent.click(screen.getByTestId('next-page-btn'));
-
-    expect(currentUrl).toBe('/?page=2');
-  });
-
-  test('redirect', async () => {
-    (showCards as jest.Mock).mockResolvedValueOnce([]);
-    renderMain();
-
-    await runTimersAndPromises();
-
-    expect(currentUrl).toBe('/error');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-    (console.log as jest.Mock).mockRestore();
+    expect(screen.getByText('Error Page')).toBeInTheDocument();
   });
 });

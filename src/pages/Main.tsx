@@ -1,35 +1,24 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect } from 'react';
 import { Outlet, useNavigate, useSearchParams } from 'react-router';
 
 import { CardsList } from '../components/CardsList';
-import { DataItem } from '../components/CardsList';
 import { Loader } from '../components/loader/Loader';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
-import { showCards } from '../api/showCards';
-
-interface ICharacter {
-  id: number;
-  name: string;
-  image: string;
-}
-
-interface MainState {
-  data: DataItem[];
-  character: ICharacter | null;
-  lastQuery: string | undefined;
-}
-
-const defaultState: MainState = {
-  data: [],
-  character: null,
-  lastQuery: undefined,
-};
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { getCards } from '../utils/getCards';
+import {
+  resetCardsState,
+  selectCards,
+  selectErrorState,
+  selectIsLoading,
+} from '../features/cards/cardsSlice';
 
 export const Main: FC = () => {
-  const [state, setState] = useState(defaultState);
-  const [errorState, setErrorState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cards = useAppSelector(selectCards);
+  const errorState = useAppSelector(selectErrorState);
+  const isLoading = useAppSelector(selectIsLoading);
+  const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -50,34 +39,11 @@ export const Main: FC = () => {
   }, [searchParams, navigate, currentPage]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const characters: DataItem[] = await showCards(currentPage);
-
-        if (!characters || characters.length === 0) {
-          throw new Error('No characters found.');
-        }
-
-        setState((prev) => ({ ...prev, data: characters }));
-      } catch (err) {
-        console.log(err);
-        setErrorState('404 Not Found');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const timerId = setTimeout(() => {
-      fetchData();
-    }, 1000);
-
-    return () => clearTimeout(timerId);
-  }, [currentPage, currentUserValue]);
+    dispatch(getCards(currentPage));
+  }, [dispatch, currentPage]);
 
   const handlePageChange = (newPage: number) => {
-    setIsLoading(true);
-    setState((prev) => ({ ...prev, data: [] }));
-    setErrorState(null);
+    dispatch(resetCardsState());
     if (currentUserValue) {
       navigate(
         `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
@@ -91,7 +57,7 @@ export const Main: FC = () => {
     }
   }, [errorState, navigate]);
 
-  const filteredData = state.data.filter((item) =>
+  const filteredData = cards.filter((item) =>
     item.name.toLowerCase().includes(currentUserValue.toLowerCase())
   );
 

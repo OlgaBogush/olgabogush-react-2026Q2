@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { configureStore } from '@reduxjs/toolkit';
+import { favouritesReducer } from '../features/favourites/favouritesSlice';
+import { Provider } from 'react-redux';
+
 import '@testing-library/jest-dom';
 
 import { App } from '../App';
@@ -36,11 +40,17 @@ jest.mock('../components/SingleCard', () => ({
 }));
 
 describe('App', () => {
+  const store = configureStore({
+    reducer: { favourites: favouritesReducer },
+  });
+
   test('render Header and Footer', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/']}>
+          <App />
+        </MemoryRouter>
+      </Provider>
     );
     expect(screen.getByTestId('header')).toBeInTheDocument();
     expect(screen.getByTestId('footer')).toBeInTheDocument();
@@ -48,27 +58,33 @@ describe('App', () => {
 
   test('render Main', () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/']}>
+          <App />
+        </MemoryRouter>
+      </Provider>
     );
     expect(screen.getByTestId('page-main')).toBeInTheDocument();
   });
 
   test('render About', () => {
     render(
-      <MemoryRouter initialEntries={['/about']}>
-        <App />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/about']}>
+          <App />
+        </MemoryRouter>
+      </Provider>
     );
     expect(screen.getByTestId('page-about')).toBeInTheDocument();
   });
 
   test('render NotFound', () => {
     render(
-      <MemoryRouter initialEntries={['/some/random-page']}>
-        <App />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/some/random-page']}>
+          <App />
+        </MemoryRouter>
+      </Provider>
     );
     expect(screen.getByTestId('page-not-found')).toBeInTheDocument();
   });

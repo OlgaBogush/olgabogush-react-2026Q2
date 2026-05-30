@@ -46,14 +46,14 @@ export const Search: FC = () => {
       />
 
       <button
-        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-green-200"
+        className="min-w-20 h-8 text-base cursor-pointer border rounded-sm border-green-700"
         onClick={handleSearchSubmit}
       >
         Search
       </button>
 
       <button
-        className="min-w-20 h-8 text-base cursor-pointer rounded-sm bg-red-200"
+        className="min-w-20 h-8 text-base cursor-pointer border rounded-sm border-red-700"
         onClick={handleTestClick}
       >
         Test

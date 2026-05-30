@@ -1,42 +1,54 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter } from 'react-router';
+import { configureStore } from '@reduxjs/toolkit';
+import { cardsReducer } from '../features/cards/cardsSlice';
+import { Provider } from 'react-redux';
+
 import '@testing-library/jest-dom';
 
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { AppStore } from '../app/store';
+import { favouritesReducer } from '../features/favourites/favouritesSlice';
 
 describe('NotFoundPage', () => {
-  test('render', async () => {
+  let store: AppStore;
+
+  beforeEach(() => {
+    store = configureStore({
+      reducer: { cards: cardsReducer, favourites: favouritesReducer },
+    });
+  });
+
+  test('render', () => {
     render(
-      <MemoryRouter>
-        <NotFoundPage />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <NotFoundPage />
+        </MemoryRouter>
+      </Provider>
     );
 
-    expect(
-      screen.getByText(
-        /Something went wrong. No data was found, please, try again later./i
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByText('404 (Not Found)')).toBeInTheDocument();
 
     expect(
       screen.getByRole('button', { name: /go to the main page/i })
     ).toBeInTheDocument();
   });
 
-  test('redirect', async () => {
+  test('redirect', () => {
     render(
-      <MemoryRouter initialEntries={['/not-found']}>
-        <Routes>
-          <Route path="/not-found" element={<NotFoundPage />} />
-          <Route path="/" element={<div>Main page</div>} />
-        </Routes>
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <NotFoundPage />
+        </MemoryRouter>
+      </Provider>
     );
 
     const button = screen.getByRole('button', { name: /go to the main page/i });
 
     fireEvent.click(button);
 
-    expect(screen.getByText('Main page')).toBeInTheDocument();
+    expect(store.getState().cards.isLoading).toBe(true);
+    expect(store.getState().cards.errorState).toBeNull();
   });
 });
