@@ -2,7 +2,10 @@ import { MouseEvent, FC } from 'react';
 import { NavLink, useSearchParams } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 
-import { addItemToFavourites } from '../features/favourites/favouritesSlice';
+import {
+  addItemToFavourites,
+  selectFavouritesList,
+} from '../features/favourites/favouritesSlice';
 
 export interface CardProps {
   id: number;
@@ -13,10 +16,9 @@ export interface CardProps {
 export const Card: FC<CardProps> = ({ id, name, image }) => {
   const [searchParams] = useSearchParams();
   const currentPage = searchParams.get('page') || 1;
+
   const dispatch = useAppDispatch();
-  const favouritesCards = useAppSelector(
-    (state) => state.favourites.favourites
-  );
+  const favouritesCards = useAppSelector(selectFavouritesList);
 
   const isChecked = favouritesCards.some((item) => item.id === id);
 
