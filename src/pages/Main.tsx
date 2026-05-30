@@ -34,11 +34,7 @@ export const Main: FC = () => {
   }, [searchParams, navigate, currentPage]);
 
   useEffect(() => {
-    const timerId = setTimeout(() => {
-      dispatch(getCards(currentPage));
-    }, 1000);
-
-    return () => clearTimeout(timerId);
+    dispatch(getCards(currentPage));
   }, [dispatch, currentPage]);
 
   const handlePageChange = (newPage: number) => {

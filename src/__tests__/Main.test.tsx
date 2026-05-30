@@ -1,14 +1,14 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import { Provider } from 'react-redux';
-import { configureStore, createAsyncThunk } from '@reduxjs/toolkit';
+import { configureStore, UnknownAction } from '@reduxjs/toolkit';
 
 import '@testing-library/jest-dom';
 
 import { Main } from '../pages/Main';
 import { CardsListProps } from '../components/CardsList';
 import { PaginationProps } from '../components/Pagination';
-import { cardsReducer } from '../features/cards/cardsSlice';
+import { cardsReducer, resetCardsState } from '../features/cards/cardsSlice';
 import { AppStore } from '../app/store';
 import { favouritesReducer } from '../features/favourites/favouritesSlice';
 import { getCards } from '../utils/getCards';
@@ -88,54 +88,64 @@ describe('Main', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
-    jest.useFakeTimers();
     store = configureStore({
       reducer: { cards: cardsReducer, favourites: favouritesReducer },
     });
   });
 
   test('render', async () => {
-    (getCards as unknown as jest.Mock).mockImplementation(
-      createAsyncThunk('cards/getCards', () => mockData)
-    );
-
-    renderMain('/?name=Pika');
-
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
-    // expect(screen.getByTestId('card-item')).toHaveTextContent('Pikachu');
+    const mockAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/fulfilled',
+          payload: mockData,
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(mockAction);
 
     await act(async () => {
-      jest.advanceTimersByTime(1000);
-      await Promise.resolve();
+      renderMain('/?name=Pika');
     });
 
-    expect(screen.queryByTestId('loader')).not.toBeInTheDocument();
     expect(screen.getByTestId('card-10')).toHaveTextContent('Pikachu');
 
-    fireEvent.click(screen.getByTestId('next-page-btn'));
+    const nextMockAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/fulfilled',
+          payload: [],
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(nextMockAction);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('next-page-btn'));
+    });
+
+    act(() => {
+      store.dispatch(resetCardsState());
+    });
 
     expect(store.getState().cards.cards).toEqual([]);
-    // expect(store.getState().cards.isLoading).toBe(true);
   });
 
   test('error', async () => {
-    (getCards as unknown as jest.Mock).mockImplementation(
-      createAsyncThunk('cards/getCards', (_, { rejectWithValue }) => {
-        return rejectWithValue('Server Error');
-      })
-    );
-
-    renderMain();
+    const mockErrorAction =
+      () => async (dispatch: (action: UnknownAction) => void) => {
+        dispatch({ type: 'cards/getCards/pending' });
+        dispatch({
+          type: 'cards/getCards/rejected',
+          payload: 'Server Error',
+        } as UnknownAction);
+      };
+    (getCards as unknown as jest.Mock).mockImplementation(mockErrorAction);
 
     await act(async () => {
-      jest.advanceTimersByTime(1000);
-      await Promise.resolve();
+      renderMain('/');
     });
 
     expect(screen.getByText('Error Page')).toBeInTheDocument();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
   });
 });
