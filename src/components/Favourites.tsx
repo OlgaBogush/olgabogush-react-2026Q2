@@ -4,6 +4,7 @@ import { useAppDispatch } from '../app/hooks';
 import { removeAllItems } from '../features/favourites/favouritesSlice';
 
 import { ThemeContext } from '../context/ThemeContext';
+import { downloadFile } from '../utils/downloadFile';
 
 interface FavouritesProps {
   favourites: DataItem[] | null;
@@ -23,31 +24,12 @@ export const Favourites: FC<FavouritesProps> = ({ favourites }) => {
   };
 
   const handleDownloadButton = (): void => {
-    const headers = ['ID', 'Name', 'Image URL'].join(',');
-    const rows = favourites.map(
-      (item) => `${item.id},"${item.name}","${item.image}"`
-    );
-    const csvData = '\uFEFF' + [headers, ...rows].join('\n');
-    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-
-    link.setAttribute('download', `${favourites.length}_items.csv`);
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadFile(favourites);
   };
 
   return (
     <div
-      className={`fixed left-0 right-0 bottom-0 z-100 flex flex-col gap-2 p-2 border rounded-sm border-gray-300 max-h-48 overflow-y-auto ${
+      className={`fixed left-4 right-4 bottom-4 z-100 flex flex-col gap-2 p-2 border rounded-sm border-gray-300 max-h-48 overflow-y-auto ${
         isDarkTheme
           ? 'bg-gray-900 text-white border-gray-300'
           : 'bg-white text-gray-900 border-gray-300'
@@ -75,12 +57,14 @@ export const Favourites: FC<FavouritesProps> = ({ favourites }) => {
         </p>
         <div className="flex items-center justify-center gap-2">
           <button
+            type="button"
             className="flex items-center justify-center min-w-24 h-8 text-base border rounded-sm border-gray-300 cursor-pointer"
             onClick={handleRemoveButton}
           >
             Unselect all
           </button>
           <button
+            type="button"
             className="flex items-center justify-center min-w-24 h-8 text-base border rounded-sm border-gray-300 cursor-pointer"
             onClick={handleDownloadButton}
           >
