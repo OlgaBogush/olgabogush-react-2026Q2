@@ -42,7 +42,14 @@ export const cardsSlice = createSlice({
       state.errorState = payload || 'Unknown error';
     });
   },
+  selectors: {
+    selectCards: (state) => state.cards,
+    selectErrorState: (state) => state.errorState,
+    selectIsLoading: (state) => state.isLoading,
+  },
 });
 
 export const { resetCardsState } = cardsSlice.actions;
+export const { selectCards, selectErrorState, selectIsLoading } =
+  cardsSlice.selectors;
 export const cardsReducer = cardsSlice.reducer;

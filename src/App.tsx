@@ -10,9 +10,10 @@ import { SingleCard } from './components/SingleCard';
 import { useAppSelector } from './app/hooks';
 import { Favourites } from './components/Favourites';
 import { ThemeContext } from './context/ThemeContext';
+import { selectFavouritesList } from './features/favourites/favouritesSlice';
 
 export const App: FC = () => {
-  const { favourites } = useAppSelector((state) => state.favourites);
+  const favourites = useAppSelector(selectFavouritesList);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
 
   const toggleTheme = () => {

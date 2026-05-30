@@ -6,13 +6,18 @@ import { Loader } from '../components/loader/Loader';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { resetCardsState } from '../features/cards/cardsSlice';
 import { getCards } from '../utils/getCards';
+import {
+  resetCardsState,
+  selectCards,
+  selectErrorState,
+  selectIsLoading,
+} from '../features/cards/cardsSlice';
 
 export const Main: FC = () => {
-  const { cards, errorState, isLoading } = useAppSelector(
-    (state) => state.cards
-  );
+  const cards = useAppSelector(selectCards);
+  const errorState = useAppSelector(selectErrorState);
+  const isLoading = useAppSelector(selectIsLoading);
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
