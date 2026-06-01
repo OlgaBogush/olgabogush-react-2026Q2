@@ -8,7 +8,7 @@ interface ICardsResults {
   results: DataItem[];
 }
 
-const TTL: number = Number(import.meta.env.VITE_CACHE_TTL) || 60;
+const TTL: number = Number(process.env.VITE_CACHE_TTL) || 300;
 
 export const apiSlice = createApi({
   reducerPath: 'api',
