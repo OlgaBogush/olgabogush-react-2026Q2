@@ -13,7 +13,8 @@ export const Main: FC = () => {
   const currentPage = Number(searchParams.get('page')) || 1;
   const navigate = useNavigate();
 
-  const { data, isLoading, error } = useGetCardsQuery(currentPage);
+  const { data, isLoading, isFetching, error, refetch } =
+    useGetCardsQuery(currentPage);
 
   const currentUserValue =
     searchParams.get('name') || localStorage.getItem('userValue') || '';
@@ -45,7 +46,7 @@ export const Main: FC = () => {
 
   let content;
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     content = <Loader />;
   } else {
     content = (
@@ -67,10 +68,18 @@ export const Main: FC = () => {
         <div className=" w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
           {content}
         </div>
-        <Pagination
-          currentPage={currentPage}
-          handlePageChange={handlePageChange}
-        />
+        <div className="flex items-center justify-between">
+          <Pagination
+            currentPage={currentPage}
+            handlePageChange={handlePageChange}
+          />
+          <button
+            className="min-w-40 h-8 text-base cursor-pointer border rounded-sm border-red-700"
+            onClick={refetch}
+          >
+            Refetch Cards
+          </button>
+        </div>
       </div>
     </>
   );

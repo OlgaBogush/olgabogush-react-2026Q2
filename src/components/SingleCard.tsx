@@ -15,7 +15,13 @@ export interface ICharacterState {
 
 export const SingleCard: FC = () => {
   const { id } = useParams<{ id: string | undefined }>();
-  const { data: card, isLoading, error } = useGetSingleCardQuery(id || '');
+  const {
+    data: card,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetSingleCardQuery(id || '');
 
   const [searchParams] = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
@@ -25,7 +31,7 @@ export const SingleCard: FC = () => {
     navigate(`/?page=${currentPage}`);
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading || isFetching) return <Loader />;
   if (error || !card) return <NotFoundDetails />;
 
   return (
@@ -51,6 +57,12 @@ export const SingleCard: FC = () => {
         </p>
         <p className="text-xs text-gray-700 italic">{card.created}</p>
       </div>
+      <button
+        className="min-w-40 h-8 text-base cursor-pointer border rounded-sm border-red-700"
+        onClick={refetch}
+      >
+        Refetch Details
+      </button>
     </div>
   );
 };
