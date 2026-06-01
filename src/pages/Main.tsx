@@ -45,11 +45,29 @@ export const Main: FC = () => {
     ) || [];
 
   let content;
+  let errorMessage = 'Something went wrong. Please try again later.';
+
+  if (error) {
+    if ('status' in error) {
+      if (error.status === 404) {
+        errorMessage = 'Not Found. Please check the search parameters.';
+      } else if (error.status === 'FETCH_ERROR') {
+        errorMessage = 'Network error. Please try again later.';
+      } else
+        errorMessage = `Server error. Code: ${error.status}. Please try again later.`;
+    } else if (error.message) {
+      errorMessage = `Critical application error. ${error.message}`;
+    }
+  }
 
   if (isLoading || isFetching) {
     content = <Loader />;
   } else if (error) {
-    return <NotFoundPage />;
+    content = <NotFoundPage errorMessage={errorMessage} />;
+  } else if (filteredData.length === 0) {
+    content = (
+      <NotFoundPage errorMessage="Nothing was found for your query. Please check the search parameters." />
+    );
   } else {
     content = (
       <>

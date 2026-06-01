@@ -1,7 +1,13 @@
 import { FC } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
-export const NotFoundDetails: FC = () => {
+interface NotFoundDetailsProps {
+  errorMessageForDetails: string;
+}
+
+export const NotFoundDetails: FC<NotFoundDetailsProps> = ({
+  errorMessageForDetails,
+}) => {
   const [searchParams] = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
   const navigate = useNavigate();
@@ -19,7 +25,9 @@ export const NotFoundDetails: FC = () => {
       >
         x
       </button>
-      <p className="flex items-center justify-center"> Not Found Details</p>
+      <p className="flex items-center justify-center">
+        {errorMessageForDetails}
+      </p>
     </div>
   );
 };

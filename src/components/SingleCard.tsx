@@ -32,7 +32,22 @@ export const SingleCard: FC = () => {
   };
 
   if (isLoading || isFetching) return <Loader />;
-  if (error || !card) return <NotFoundDetails />;
+  if (error || !card) {
+    let errorMessageForDetails =
+      'Could not upload detailed information. Please try again.';
+    if (error) {
+      if ('status' in error) {
+        if (error.status === 404) {
+          errorMessageForDetails = 'Character not found.';
+        } else if (error.status === 'FETCH_ERROR') {
+          errorMessageForDetails = 'Network error.';
+        } else errorMessageForDetails = `Server error. Code: ${error.status}.`;
+      } else if (error.message) {
+        errorMessageForDetails = error.message;
+      }
+    }
+    return <NotFoundDetails errorMessageForDetails={errorMessageForDetails} />;
+  }
 
   return (
     <div className="relative flex grow flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
