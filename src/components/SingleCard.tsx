@@ -38,9 +38,9 @@ export const SingleCard: FC = () => {
     if (error) {
       if ('status' in error) {
         if (error.status === 404) {
-          errorMessageForDetails = 'Character not found.';
+          errorMessageForDetails = 'Character not found. Please try again.';
         } else if (error.status === 'FETCH_ERROR') {
-          errorMessageForDetails = 'Network error.';
+          errorMessageForDetails = 'Network error. Please try again later.';
         } else errorMessageForDetails = `Server error. Code: ${error.status}.`;
       } else if (error.message) {
         errorMessageForDetails = error.message;

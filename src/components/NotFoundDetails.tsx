@@ -25,7 +25,7 @@ export const NotFoundDetails: FC<NotFoundDetailsProps> = ({
       >
         x
       </button>
-      <p className="flex items-center justify-center">
+      <p className="flex items-center justify-center text-center">
         {errorMessageForDetails}
       </p>
     </div>
