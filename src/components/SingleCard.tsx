@@ -35,11 +35,11 @@ export const SingleCard: FC = () => {
   if (error || !card) return <NotFoundDetails />;
 
   return (
-    <div className="relative flex flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
-      <div className="flex items-center justify-center">
+    <div className="relative flex grow flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
+      <div className="flex items-center justify-center p-8">
         <button
           onClick={closeSingleCard}
-          className="absolute top-0 right-1 text-gray-300 hover:text-gray-500 font-bold text-lg cursor-pointer"
+          className="absolute top-0 right-2 text-gray-300 hover:text-gray-500 font-bold text-lg cursor-pointer"
         >
           x
         </button>

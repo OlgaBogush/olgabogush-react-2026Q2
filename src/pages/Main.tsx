@@ -48,6 +48,8 @@ export const Main: FC = () => {
 
   if (isLoading || isFetching) {
     content = <Loader />;
+  } else if (error) {
+    return <NotFoundPage />;
   } else {
     content = (
       <>
@@ -57,15 +59,11 @@ export const Main: FC = () => {
     );
   }
 
-  if (error) {
-    return <NotFoundPage />;
-  }
-
   return (
     <>
       <Search />
       <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
-        <div className=" w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
+        <div className="w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
           {content}
         </div>
         <div className="flex items-center justify-between">
