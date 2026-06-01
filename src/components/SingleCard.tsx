@@ -1,9 +1,11 @@
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 
-import { showSingleCard } from '../api/showSingleCard';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useGetSingleCardQuery } from '../features/api/apiSlice';
+import { Loader } from './loader/Loader';
+import { NotFoundDetails } from './NotFoundDetails';
 
-interface ICharacterState {
+export interface ICharacterState {
   name: string;
   status: string;
   gender: string;
@@ -11,40 +13,20 @@ interface ICharacterState {
   created: string;
 }
 
-const defaultCard: ICharacterState = {
-  name: '',
-  status: '',
-  gender: '',
-  image: undefined,
-  created: '',
-};
-
 export const SingleCard: FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [card, setCard] = useState(defaultCard);
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string | undefined }>();
+  const { data: card, isLoading, error } = useGetSingleCardQuery(id || '');
 
   const [searchParams] = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
-
-  useEffect(() => {
-    const fetchCard = async () => {
-      try {
-        const data: ICharacterState = await showSingleCard(Number(id));
-        setCard(data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    if (id) {
-      fetchCard();
-    }
-  }, [id]);
+  const navigate = useNavigate();
 
   const closeSingleCard = () => {
     navigate(`/?page=${currentPage}`);
   };
+
+  if (isLoading) return <Loader />;
+  if (error || !card) return <NotFoundDetails />;
 
   return (
     <div className="relative flex flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">

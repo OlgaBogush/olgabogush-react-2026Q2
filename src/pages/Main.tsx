@@ -1,28 +1,20 @@
 import { FC, useEffect } from 'react';
 import { Outlet, useNavigate, useSearchParams } from 'react-router';
 
-import { CardsList } from '../components/CardsList';
+import { CardsList, DataItem } from '../components/CardsList';
 import { Loader } from '../components/loader/Loader';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { getCards } from '../utils/getCards';
-import {
-  resetCardsState,
-  selectCards,
-  selectErrorState,
-  selectIsLoading,
-} from '../features/cards/cardsSlice';
+import { useGetCardsQuery } from '../features/api/apiSlice';
+import { NotFoundPage } from './NotFoundPage';
 
 export const Main: FC = () => {
-  const cards = useAppSelector(selectCards);
-  const errorState = useAppSelector(selectErrorState);
-  const isLoading = useAppSelector(selectIsLoading);
-  const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
   const navigate = useNavigate();
 
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const { data, isLoading, error } = useGetCardsQuery(currentPage);
+
   const currentUserValue =
     searchParams.get('name') || localStorage.getItem('userValue') || '';
 
@@ -38,12 +30,7 @@ export const Main: FC = () => {
     }
   }, [searchParams, navigate, currentPage]);
 
-  useEffect(() => {
-    dispatch(getCards(currentPage));
-  }, [dispatch, currentPage]);
-
   const handlePageChange = (newPage: number) => {
-    dispatch(resetCardsState());
     if (currentUserValue) {
       navigate(
         `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
@@ -51,15 +38,10 @@ export const Main: FC = () => {
     } else navigate(`/?page=${newPage}`);
   };
 
-  useEffect(() => {
-    if (errorState) {
-      navigate('/error');
-    }
-  }, [errorState, navigate]);
-
-  const filteredData = cards.filter((item) =>
-    item.name.toLowerCase().includes(currentUserValue.toLowerCase())
-  );
+  const filteredData: DataItem[] =
+    data?.results.filter((item) =>
+      item.name.toLowerCase().includes(currentUserValue.toLowerCase())
+    ) || [];
 
   let content;
 
@@ -72,6 +54,10 @@ export const Main: FC = () => {
         <Outlet />
       </>
     );
+  }
+
+  if (error) {
+    return <NotFoundPage />;
   }
 
   return (

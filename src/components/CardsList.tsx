@@ -14,8 +14,8 @@ export interface CardsListProps {
 export const CardsList: FC<CardsListProps> = ({ data }) => {
   return (
     <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
-      {data.map((item) => (
-        <Card key={item.id} id={item.id} name={item.name} image={item.image} />
+      {data.map(({ id, name, image }) => (
+        <Card key={id} id={id} name={name} image={image} />
       ))}
     </ul>
   );
