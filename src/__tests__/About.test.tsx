@@ -1,26 +1,26 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router';
 
 import { About } from '../components/About';
 
-describe('About Component', () => {
+describe('About', () => {
   test('render', () => {
     render(
-      <MemoryRouter>
+      <BrowserRouter>
         <About />
-      </MemoryRouter>
+      </BrowserRouter>
     );
 
-    expect(screen.getByText('Author:')).toBeInTheDocument();
-    expect(screen.getByText('React course:')).toBeInTheDocument();
-
+    expect(screen.getByText(/author:/i)).toBeInTheDocument();
     const githubLink = screen.getByRole('link', { name: 'OlgaBogush' });
+    expect(githubLink).toBeInTheDocument();
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/OlgaBogush');
+
+    expect(screen.getByText(/react course:/i)).toBeInTheDocument();
     const courseLink = screen.getByRole('link', {
       name: 'RS School React course',
     });
-
-    expect(githubLink).toHaveAttribute('href', 'https://github.com/OlgaBogush');
+    expect(courseLink).toBeInTheDocument();
     expect(courseLink).toHaveAttribute(
       'href',
       'https://rs.school/courses/reactjs'

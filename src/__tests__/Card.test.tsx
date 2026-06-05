@@ -1,46 +1,59 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { BrowserRouter } from 'react-router';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-
-import '@testing-library/jest-dom';
 
 import { Card } from '../components/Card';
 import { favouritesReducer } from '../features/favourites/favouritesSlice';
 
-describe('Card Component', () => {
+describe('Card', () => {
   const mockProps = {
-    id: 42,
-    name: 'summer smith',
-    image: 'https://rickandmortyapi.com',
-  };
-
-  const createMockStore = (
-    initialState = { favourites: { favourites: [] } }
-  ) => {
-    return configureStore({
-      reducer: {
-        favourites: favouritesReducer,
-      },
-      preloadedState: initialState,
-    });
+    id: 1,
+    name: 'Rick Sanchez',
+    image: 'rick-1.jpeg',
   };
 
   test('render', () => {
-    const store = createMockStore();
+    const store = configureStore({
+      reducer: { favourites: favouritesReducer },
+    });
+
     render(
       <Provider store={store}>
-        <MemoryRouter>
+        <BrowserRouter>
           <Card {...mockProps} />
-        </MemoryRouter>
+        </BrowserRouter>
       </Provider>
     );
 
-    expect(screen.getByText('summer smith')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /rick sanchez/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'rick-1.jpeg');
+  });
 
-    const imgElement = screen.getByRole('img');
-    expect(imgElement).toBeInTheDocument();
-    expect(imgElement).toHaveAttribute('src', mockProps.image);
-    expect(imgElement).toHaveAttribute('alt', mockProps.name);
+  test('checkbox', () => {
+    const store = configureStore({
+      reducer: { favourites: favouritesReducer },
+    });
+
+    render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <Card {...mockProps} />
+        </BrowserRouter>
+      </Provider>
+    );
+
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
+    const state = store.getState();
+
+    expect(state.favourites.favourites).toContainEqual({
+      id: 1,
+      name: 'Rick Sanchez',
+      image: 'rick-1.jpeg',
+    });
   });
 });

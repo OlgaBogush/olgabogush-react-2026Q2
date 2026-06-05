@@ -1,175 +1,158 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import { MemoryRouter, Routes, Route } from 'react-router';
+import { http, HttpResponse } from 'msw';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 
-import '@testing-library/jest-dom';
-
+import { apiSlice } from '../features/api/apiSlice';
 import { SingleCard } from '../components/SingleCard';
-import { useGetSingleCardQuery } from '../features/api/apiSlice';
+import { server } from './mocks/node';
+import { NotFoundDetailsProps } from '../components/NotFoundDetails';
 
-const mockNavigate = jest.fn();
-const mockRefetch = jest.fn();
-
-jest.mock('react-router', () => ({
-  ...jest.requireActual('react-router'),
-  useNavigate: () => mockNavigate,
-  useParams: () => ({ id: '12' }),
+// Мокаем дочерние компоненты для изоляции тестирования
+vi.mock('../components/loader/Loader', () => ({
+  Loader: () => <div>Loading Details...</div>,
 }));
 
-jest.mock('../features/api/apiSlice', () => ({
-  useGetSingleCardQuery: jest.fn(),
+vi.mock('../components/NotFoundDetails', () => ({
+  NotFoundDetails: ({ errorMessageForDetails }: NotFoundDetailsProps) => (
+    <div>{errorMessageForDetails}</div>
+  ),
 }));
 
-jest.mock('../components/loader/Loader', () => ({
-  Loader: () => <div data-testid="loader" />,
-}));
-
-jest.mock('../components/NotFoundDetails', () => ({
-  NotFoundDetails: ({
-    errorMessageForDetails,
-  }: {
-    errorMessageForDetails: string;
-  }) => <div data-testid="not-found-details">{errorMessageForDetails}</div>,
-}));
+const createActualStore = () => {
+  return configureStore({
+    reducer: {
+      [apiSlice.reducerPath]: apiSlice.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(apiSlice.middleware),
+  });
+};
 
 describe('SingleCard', () => {
+  let store: ReturnType<typeof createActualStore>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    store = createActualStore();
+    // Полностью сбрасываем кэш RTK Query между тестами, чтобы избежать артефактов
+    store.dispatch(apiSlice.util.resetApiState());
   });
 
-  test('render Loader', () => {
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
-    });
+  const renderComponent = (initialEntries = ['/character/1']) => {
+    return render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="/character/:id" element={<SingleCard />} />
+            <Route path="/" element={<div />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+  };
 
-    render(
-      <MemoryRouter>
-        <SingleCard />
-      </MemoryRouter>
+  test('render loader', async () => {
+    // Даем дефолтный ответ, чтобы убрать ворнинг при монтировании
+    server.use(
+      http.get('*/1', () => {
+        return HttpResponse.json({
+          id: 1,
+          name: 'Rick Sanchez',
+          image: 'rick.jpeg',
+        });
+      })
     );
 
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    renderComponent();
+    expect(screen.getByText('Loading Details...')).toBeInTheDocument();
   });
 
-  test('render character details', () => {
-    const character = {
-      name: 'Rick Sanchez',
-      status: 'Alive',
-      gender: 'Male',
-      image: 'rick-image.jpg',
-      created: '2017-11-04',
-    };
-
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: character,
-      isLoading: false,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
-    });
-
-    render(
-      <MemoryRouter initialEntries={['/?page=2']}>
-        <SingleCard />
-      </MemoryRouter>
+  test('render character and action buttons', async () => {
+    server.use(
+      http.get('*/1', () => {
+        return HttpResponse.json({
+          id: 1,
+          name: 'Rick Sanchez',
+          status: 'Alive',
+          gender: 'Male',
+          image: 'rick-1.jpeg',
+          created: '2017-11-04',
+        });
+      })
     );
 
-    expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
-    expect(screen.getByText('Alive')).toBeInTheDocument();
-    expect(screen.getByText('Male')).toBeInTheDocument();
-    expect(screen.getByText('2017-11-04')).toBeInTheDocument();
+    renderComponent(['/character/1?page=3']);
 
-    const closeButton = screen.getByRole('button', { name: 'x' });
-    fireEvent.click(closeButton);
-    expect(mockNavigate).toHaveBeenCalledWith('/?page=2');
+    // Ждем рендеринга данных персонажа
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /rick sanchez/i })
+      ).toBeInTheDocument();
+    });
 
+    expect(screen.getByText(/status:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Alive/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/gender:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Male/i)).toBeInTheDocument();
+
+    // Кликаем по кнопке Refetch Details
     const refetchButton = screen.getByRole('button', {
-      name: /Refetch Details/i,
+      name: /refetch details/i,
     });
     fireEvent.click(refetchButton);
-    expect(mockRefetch).toHaveBeenCalledTimes(1);
+
+    // Кликаем по кнопке закрытия карточки (крестик)
+    const closeButton = screen.getByRole('button', { name: 'x' });
+    fireEvent.click(closeButton);
   });
 
-  test('render message when character is not found', () => {
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      error: { status: 404 },
-      refetch: mockRefetch,
+  test('render error 404', async () => {
+    server.use(
+      http.get('*/999', () => {
+        return new HttpResponse(null, { status: 404 });
+      })
+    );
+
+    renderComponent(['/character/999']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Character not found. Please try again.')
+      ).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <SingleCard />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('not-found-details')).toHaveTextContent(
-      'Character not found. Please try again.'
-    );
   });
 
-  test('render message when FETCH_ERROR', () => {
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      error: { status: 'FETCH_ERROR' },
-      refetch: mockRefetch,
+  test('render network error', async () => {
+    server.use(
+      http.get('*/1', () => {
+        return HttpResponse.error();
+      })
+    );
+
+    renderComponent(['/character/1']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Network error. Please try again later.')
+      ).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <SingleCard />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('not-found-details')).toHaveTextContent(
-      'Network error. Please try again later.'
-    );
   });
 
-  test('render message for server error', () => {
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      error: { status: 500 },
-      refetch: mockRefetch,
+  test('render error 500', async () => {
+    server.use(
+      http.get('*/1', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    renderComponent(['/character/1']);
+
+    await waitFor(() => {
+      expect(screen.getByText('Server error. Code: 500.')).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <SingleCard />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('not-found-details')).toHaveTextContent(
-      'Server error. Code: 500.'
-    );
-  });
-
-  test('render message for application error', () => {
-    (useGetSingleCardQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      error: { message: 'Something went wrong.' },
-      refetch: mockRefetch,
-    });
-
-    render(
-      <MemoryRouter>
-        <SingleCard />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('not-found-details')).toHaveTextContent(
-      'Something went wrong.'
-    );
   });
 });

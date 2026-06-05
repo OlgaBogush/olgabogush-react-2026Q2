@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
-interface NotFoundDetailsProps {
+export interface NotFoundDetailsProps {
   errorMessageForDetails: string;
 }
 

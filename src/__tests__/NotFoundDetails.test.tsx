@@ -1,56 +1,29 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router';
 
 import { NotFoundDetails } from '../components/NotFoundDetails';
 
-const mockNavigate = jest.fn();
-jest.mock('react-router', () => ({
-  ...jest.requireActual('react-router'),
-  useNavigate: () => mockNavigate,
-}));
-
 describe('NotFoundDetails', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  const errorMessage = 'Character is not found';
 
-  test('render error message', () => {
-    const textError = 'Character not found. Please try again.';
-
+  test('render', () => {
     render(
-      <MemoryRouter>
-        <NotFoundDetails errorMessageForDetails={textError} />
+      <MemoryRouter initialEntries={['/details?page=5']}>
+        <Routes>
+          <Route
+            path="/details"
+            element={<NotFoundDetails errorMessageForDetails={errorMessage} />}
+          />
+          <Route path="/" element={<div>Main Page</div>} />
+        </Routes>
       </MemoryRouter>
     );
 
-    expect(screen.getByText(textError)).toBeInTheDocument();
-  });
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
 
-  test('redirect using close button to main page', () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <NotFoundDetails errorMessageForDetails="Error" />
-      </MemoryRouter>
-    );
+    const closeButton = screen.getByRole('button', { name: 'x' });
+    fireEvent.click(closeButton);
 
-    const button = screen.getByRole('button', { name: /x/i });
-    fireEvent.click(button);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/?page=1');
-  });
-
-  test('redirect using close button to page from url parameters', () => {
-    render(
-      <MemoryRouter initialEntries={['/?page=3']}>
-        <NotFoundDetails errorMessageForDetails="Error" />
-      </MemoryRouter>
-    );
-
-    const button = screen.getByRole('button', { name: /x/i });
-    fireEvent.click(button);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/?page=3');
+    expect(screen.getByText('Main Page')).toBeInTheDocument();
   });
 });

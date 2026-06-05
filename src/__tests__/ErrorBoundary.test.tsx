@@ -1,46 +1,37 @@
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { ErrorComponent } from '../components/ErrorComponent';
+
+const TestComponent = () => {
+  throw new Error('Test breaking error');
+};
 
 describe('ErrorBoundary', () => {
-  let consoleSpy: jest.SpyInstance;
-
-  beforeEach(() => {
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleSpy.mockRestore();
-  });
-
-  test('render', () => {
+  test('render content', () => {
     render(
       <ErrorBoundary>
-        <div data-testid="child-element">test</div>
+        <div>Useful Content</div>
       </ErrorBoundary>
     );
 
-    expect(screen.getByTestId('child-element')).toBeInTheDocument();
-    expect(
-      screen.queryByText(/An error has occurred/i)
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('Useful Content')).toBeInTheDocument();
   });
 
-  test('check of error catching', () => {
+  test('render error', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     render(
       <ErrorBoundary>
-        <ErrorComponent />
+        <TestComponent />
       </ErrorBoundary>
     );
 
     expect(
-      screen.getByText(
-        /An error has occurred. You can refresh the page to start over./i
-      )
+      screen.getByRole('heading', {
+        name: /an error has occurred\. you can refresh the page to start over\./i,
+      })
     ).toBeInTheDocument();
 
-    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });

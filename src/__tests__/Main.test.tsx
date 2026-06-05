@@ -1,151 +1,148 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-
-import '@testing-library/jest-dom';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import { http, HttpResponse } from 'msw';
 
 import { Main } from '../pages/Main';
-import { useGetCardsQuery } from '../features/api/apiSlice';
+import { apiSlice } from '../features/api/apiSlice';
+import { server } from './mocks/node';
+import { BASE_URL } from '../utils/constants';
+import { PaginationProps } from '../components/Pagination';
+import { CardsListProps, DataItem } from '../components/CardsList';
 
-const mockNavigate = jest.fn();
-const mockRefetch = jest.fn();
-
-jest.mock('react-router', () => ({
-  ...jest.requireActual('react-router'),
-  useNavigate: () => mockNavigate,
+vi.mock('../components/Search', () => ({
+  Search: () => <div data-testid="search-mock">Search Mock</div>,
 }));
 
-jest.mock('../features/api/apiSlice', () => ({
-  useGetCardsQuery: jest.fn(),
-}));
-
-jest.mock('../components/Search', () => ({
-  Search: () => <div data-testid="search-mock" />,
-}));
-
-jest.mock('../components/CardsList', () => ({
-  CardsList: () => <div data-testid="cards-list-mock" />,
-}));
-
-jest.mock('../components/Pagination', () => ({
-  Pagination: () => (
-    <button
-      data-testid="pagination-mock"
-      onClick={() => mockNavigate('/?page=2')}
-    />
+vi.mock('../components/Pagination', () => ({
+  Pagination: ({ currentPage, handlePageChange }: PaginationProps) => (
+    <div>
+      <span data-testid="current-page">{currentPage}</span>
+      <button data-testid="page-btn" onClick={() => handlePageChange(2)}>
+        Next Page
+      </button>
+    </div>
   ),
 }));
 
-jest.mock('../components/loader/Loader', () => ({
-  Loader: () => <div data-testid="loader" />,
+vi.mock('../components/CardsList', () => ({
+  CardsList: ({ data }: CardsListProps) => (
+    <div data-testid="cards-list-mock">
+      {data.map((item: DataItem) => (
+        <div key={item.id}>{item.name}</div>
+      ))}
+    </div>
+  ),
 }));
 
+vi.mock('../components/loader/Loader', () => ({
+  Loader: () => <div>Loading...</div>,
+}));
+
+vi.mock('./NotFoundPage', () => ({
+  NotFoundPage: ({ errorMessage }: { errorMessage: string }) => (
+    <div>{errorMessage}</div>
+  ),
+}));
+
+const createActualStore = () => {
+  return configureStore({
+    reducer: {
+      [apiSlice.reducerPath]: apiSlice.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(apiSlice.middleware),
+  });
+};
+
 describe('Main', () => {
+  let store: ReturnType<typeof createActualStore>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     localStorage.clear();
+
+    store = createActualStore();
+    store.dispatch(apiSlice.util.resetApiState());
   });
 
-  test('render Loader', () => {
-    (useGetCardsQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
+  const renderComponent = (initialEntries = ['/']) => {
+    return render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="/" element={<Main />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    );
+  };
+
+  test('render successfully', async () => {
+    renderComponent(['/?page=1']);
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('cards-list-mock')).toBeInTheDocument();
     });
 
-    render(
-      <MemoryRouter>
-        <Main />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
+    expect(screen.getByText('Morty Smith')).toBeInTheDocument();
   });
 
-  test('render cardsList', () => {
-    (useGetCardsQuery as jest.Mock).mockReturnValue({
-      data: { results: [{ id: 1, name: 'Rick', image: 'url' }] },
-      isLoading: false,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
+  test('filteredData is empty', async () => {
+    renderComponent(['/?page=1&name=Paul']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Nothing was found for your query. Please check the search parameters.'
+        )
+      ).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <Main />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByTestId('cards-list-mock')).toBeInTheDocument();
   });
 
-  test('render NotFoundPage', () => {
-    (useGetCardsQuery as jest.Mock).mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      error: { status: 404 },
-      refetch: mockRefetch,
+  test('render 404 error', async () => {
+    renderComponent(['/?page=19999999']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Not Found. Please check the search parameters.')
+      ).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <Main />
-      </MemoryRouter>
-    );
-
-    expect(
-      screen.getByText('Not Found. Please check the search parameters.')
-    ).toBeInTheDocument();
   });
 
-  test('render when search filter finds nothing ', () => {
-    (useGetCardsQuery as jest.Mock).mockReturnValue({
-      data: { results: [{ id: 1, name: 'Morty', image: 'url' }] },
-      isLoading: false,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
-    });
-
-    render(
-      <MemoryRouter initialEntries={['/?name=Rick']}>
-        <Main />
-      </MemoryRouter>
+  test('render network error', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, () => {
+        return HttpResponse.error();
+      })
     );
 
-    expect(
-      screen.getByText(
-        'Nothing was found for your query. Please check the search parameters.'
-      )
-    ).toBeInTheDocument();
+    renderComponent(['/?page=1']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Network error. Please try again later.')
+      ).toBeInTheDocument();
+    });
   });
 
-  test('Refetch Cards and Pagination', () => {
-    (useGetCardsQuery as jest.Mock).mockReturnValue({
-      data: { results: [{ id: 1, name: 'Morty', image: 'url' }] },
-      isLoading: false,
-      isFetching: false,
-      error: undefined,
-      refetch: mockRefetch,
-    });
-
-    render(
-      <MemoryRouter>
-        <Main />
-      </MemoryRouter>
+  test('render 500 error', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, () => {
+        return new HttpResponse(null, { status: 500 });
+      })
     );
 
-    const refetchButton = screen.getByRole('button', {
-      name: /Refetch Cards/i,
-    });
-    fireEvent.click(refetchButton);
-    expect(mockRefetch).toHaveBeenCalledTimes(1);
+    renderComponent(['/?page=1']);
 
-    const pageButton = screen.getByTestId('pagination-mock');
-    fireEvent.click(pageButton);
-    expect(mockNavigate).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(
+        screen.getByText('Server error. Code: 500. Please try again later.')
+      ).toBeInTheDocument();
+    });
   });
 });
