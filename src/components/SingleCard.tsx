@@ -1,9 +1,10 @@
 import { FC } from 'react';
 
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useGetSingleCardQuery } from '../features/api/apiSlice';
 import { Loader } from './loader/Loader';
 import { NotFoundDetails } from './NotFoundDetails';
+import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 
 export interface ICharacterState {
   name: string;
@@ -23,8 +24,7 @@ export const SingleCard: FC = () => {
     refetch,
   } = useGetSingleCardQuery(id || '');
 
-  const [searchParams] = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = useGetCurrentPage();
   const navigate = useNavigate();
 
   const closeSingleCard = () => {

@@ -7,10 +7,11 @@ import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useGetCardsQuery } from '../features/api/apiSlice';
 import { NotFoundPage } from './NotFoundPage';
+import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 
 export const Main: FC = () => {
   const [searchParams] = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = useGetCurrentPage();
   const navigate = useNavigate();
 
   const { data, isLoading, isFetching, error, refetch } =

@@ -2,7 +2,7 @@ import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { ErrorComponent } from './ErrorComponent';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useLocalStorage } from '../utils/hooks/useLocalStorage';
 
 export const Search: FC = () => {
   const [crash, setCrash] = useState<boolean>(false);

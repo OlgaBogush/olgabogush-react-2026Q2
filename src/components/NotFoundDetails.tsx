@@ -1,5 +1,6 @@
 import { FC } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
+import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 
 export interface NotFoundDetailsProps {
   errorMessageForDetails: string;
@@ -8,8 +9,7 @@ export interface NotFoundDetailsProps {
 export const NotFoundDetails: FC<NotFoundDetailsProps> = ({
   errorMessageForDetails,
 }) => {
-  const [searchParams] = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = useGetCurrentPage();
   const navigate = useNavigate();
 
   const closeNotFoundDetails = () => {
