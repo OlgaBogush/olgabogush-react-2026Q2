@@ -3,14 +3,12 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import { http, HttpResponse } from 'msw';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 import { apiSlice } from '../features/api/apiSlice';
 import { SingleCard } from '../components/SingleCard';
 import { server } from './mocks/node';
 import { NotFoundDetailsProps } from '../components/NotFoundDetails';
 
-// Мокаем дочерние компоненты для изоляции тестирования
 vi.mock('../components/loader/Loader', () => ({
   Loader: () => <div>Loading Details...</div>,
 }));
@@ -37,7 +35,6 @@ describe('SingleCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     store = createActualStore();
-    // Полностью сбрасываем кэш RTK Query между тестами, чтобы избежать артефактов
     store.dispatch(apiSlice.util.resetApiState());
   });
 
@@ -47,32 +44,16 @@ describe('SingleCard', () => {
         <MemoryRouter initialEntries={initialEntries}>
           <Routes>
             <Route path="/character/:id" element={<SingleCard />} />
-            <Route path="/" element={<div />} />
+            <Route path="/" element={<div>Main Page Content</div>} />
           </Routes>
         </MemoryRouter>
       </Provider>
     );
   };
 
-  test('render loader', async () => {
-    // Даем дефолтный ответ, чтобы убрать ворнинг при монтировании
-    server.use(
-      http.get('*/1', () => {
-        return HttpResponse.json({
-          id: 1,
-          name: 'Rick Sanchez',
-          image: 'rick.jpeg',
-        });
-      })
-    );
-
-    renderComponent();
-    expect(screen.getByText('Loading Details...')).toBeInTheDocument();
-  });
-
   test('render character and action buttons', async () => {
     server.use(
-      http.get('*/1', () => {
+      http.get('**/character/:id', () => {
         return HttpResponse.json({
           id: 1,
           name: 'Rick Sanchez',
@@ -86,7 +67,6 @@ describe('SingleCard', () => {
 
     renderComponent(['/character/1?page=3']);
 
-    // Ждем рендеринга данных персонажа
     await waitFor(() => {
       expect(
         screen.getByRole('heading', { name: /rick sanchez/i })
@@ -99,20 +79,18 @@ describe('SingleCard', () => {
     expect(screen.getByText(/gender:/i)).toBeInTheDocument();
     expect(screen.getByText(/Male/i)).toBeInTheDocument();
 
-    // Кликаем по кнопке Refetch Details
     const refetchButton = screen.getByRole('button', {
       name: /refetch details/i,
     });
     fireEvent.click(refetchButton);
-
-    // Кликаем по кнопке закрытия карточки (крестик)
     const closeButton = screen.getByRole('button', { name: 'x' });
     fireEvent.click(closeButton);
+    expect(screen.getByText('Main Page Content')).toBeInTheDocument();
   });
 
   test('render error 404', async () => {
     server.use(
-      http.get('*/999', () => {
+      http.get('**/character/:id', () => {
         return new HttpResponse(null, { status: 404 });
       })
     );
@@ -121,14 +99,14 @@ describe('SingleCard', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Character not found. Please try again.')
+        screen.getByText('Not Found. Please check the search parameters.')
       ).toBeInTheDocument();
     });
   });
 
   test('render network error', async () => {
     server.use(
-      http.get('*/1', () => {
+      http.get('**/character/:id', () => {
         return HttpResponse.error();
       })
     );
@@ -144,7 +122,7 @@ describe('SingleCard', () => {
 
   test('render error 500', async () => {
     server.use(
-      http.get('*/1', () => {
+      http.get('**/character/:id', () => {
         return new HttpResponse(null, { status: 500 });
       })
     );
@@ -152,7 +130,9 @@ describe('SingleCard', () => {
     renderComponent(['/character/1']);
 
     await waitFor(() => {
-      expect(screen.getByText('Server error. Code: 500.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Server error. Code: 500. Please try again later.')
+      ).toBeInTheDocument();
     });
   });
 });

@@ -1,12 +1,9 @@
 import { FC } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
-interface NotFoundPageProps {
-  errorMessage?: string;
-}
-
-export const NotFoundPage: FC<NotFoundPageProps> = ({ errorMessage }) => {
+export const NotFoundPage: FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGoHome = () => {
     navigate('/');
@@ -15,8 +12,8 @@ export const NotFoundPage: FC<NotFoundPageProps> = ({ errorMessage }) => {
   return (
     <div className="flex flex-col w-full max-w-[1240px] mx-auto p-6 items-center gap-6 border rounded-sm border-gray-300">
       <p>
-        {errorMessage
-          ? errorMessage
+        {location.state
+          ? location.state.msg
           : 'Something went wrong. Please try again later.'}
       </p>
       <button

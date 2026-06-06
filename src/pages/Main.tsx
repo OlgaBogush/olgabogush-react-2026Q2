@@ -1,13 +1,13 @@
 import { FC, useEffect } from 'react';
-import { Outlet, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
-import { CardsList, DataItem } from '../components/CardsList';
-import { Loader } from '../components/loader/Loader';
+import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useGetCardsQuery } from '../features/api/apiSlice';
-import { NotFoundPage } from './NotFoundPage';
 import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
+import { getErrorMessage } from '../utils/getErrorMessage';
+import { renderContent } from '../utils/renderContent';
 
 export const Main: FC = () => {
   const [searchParams] = useSearchParams();
@@ -45,45 +45,19 @@ export const Main: FC = () => {
       item.name.toLowerCase().includes(currentUserValue.toLowerCase())
     ) || [];
 
-  let content;
-  let errorMessage = 'Something went wrong. Please try again later.';
-
-  if (error) {
-    if ('status' in error) {
-      if (error.status === 404) {
-        errorMessage = 'Not Found. Please check the search parameters.';
-      } else if (error.status === 'FETCH_ERROR') {
-        errorMessage = 'Network error. Please try again later.';
-      } else
-        errorMessage = `Server error. Code: ${error.status}. Please try again later.`;
-    } else if (error.message) {
-      errorMessage = `Critical application error. ${error.message}`;
+  useEffect(() => {
+    if (error) {
+      const errorMessage = getErrorMessage(error);
+      navigate('/error', { state: { msg: errorMessage } });
     }
-  }
-
-  if (isLoading || isFetching) {
-    content = <Loader />;
-  } else if (error) {
-    content = <NotFoundPage errorMessage={errorMessage} />;
-  } else if (filteredData.length === 0) {
-    content = (
-      <NotFoundPage errorMessage="Nothing was found for your query. Please check the search parameters." />
-    );
-  } else {
-    content = (
-      <>
-        <CardsList data={filteredData} />
-        <Outlet />
-      </>
-    );
-  }
+  }, [error, navigate]);
 
   return (
     <>
       <Search />
       <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
         <div className="w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
-          {content}
+          {renderContent({ data, filteredData, isLoading, isFetching })}
         </div>
         <div className="flex items-center justify-between">
           <Pagination

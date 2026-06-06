@@ -5,6 +5,7 @@ import { useGetSingleCardQuery } from '../features/api/apiSlice';
 import { Loader } from './loader/Loader';
 import { NotFoundDetails } from './NotFoundDetails';
 import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export interface ICharacterState {
   name: string;
@@ -31,23 +32,15 @@ export const SingleCard: FC = () => {
     navigate(`/?page=${currentPage}`);
   };
 
-  if (isLoading || isFetching) return <Loader />;
   if (error || !card) {
-    let errorMessageForDetails =
-      'Could not upload detailed information. Please try again.';
+    let errorMessageForDetails = `Couldn't upload detailed information. Please try again.`;
     if (error) {
-      if ('status' in error) {
-        if (error.status === 404) {
-          errorMessageForDetails = 'Character not found. Please try again.';
-        } else if (error.status === 'FETCH_ERROR') {
-          errorMessageForDetails = 'Network error. Please try again later.';
-        } else errorMessageForDetails = `Server error. Code: ${error.status}.`;
-      } else if (error.message) {
-        errorMessageForDetails = error.message;
-      }
+      errorMessageForDetails = getErrorMessage(error);
     }
     return <NotFoundDetails errorMessageForDetails={errorMessageForDetails} />;
   }
+
+  if (isLoading || isFetching) return <Loader />;
 
   return (
     <div className="relative flex grow flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">

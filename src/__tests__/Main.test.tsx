@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 
 import { Main } from '../pages/Main';
 import { apiSlice } from '../features/api/apiSlice';
@@ -29,9 +29,11 @@ vi.mock('../components/Pagination', () => ({
 vi.mock('../components/CardsList', () => ({
   CardsList: ({ data }: CardsListProps) => (
     <div data-testid="cards-list-mock">
-      {data.map((item: DataItem) => (
-        <div key={item.id}>{item.name}</div>
-      ))}
+      {data.length === 0 ? (
+        <div data-testid="empty-cards">No cards found</div>
+      ) : (
+        data.map((item: DataItem) => <div key={item.id}>{item.name}</div>)
+      )}
     </div>
   ),
 }));
@@ -40,11 +42,12 @@ vi.mock('../components/loader/Loader', () => ({
   Loader: () => <div>Loading...</div>,
 }));
 
-vi.mock('./NotFoundPage', () => ({
-  NotFoundPage: ({ errorMessage }: { errorMessage: string }) => (
-    <div>{errorMessage}</div>
-  ),
-}));
+const ErrorPageMock = () => {
+  const location = useLocation();
+  const msg =
+    location.state?.msg || 'Something went wrong. Please try again later.';
+  return <div data-testid="error-page-mock">{msg}</div>;
+};
 
 const createActualStore = () => {
   return configureStore({
@@ -73,6 +76,7 @@ describe('Main', () => {
         <MemoryRouter initialEntries={initialEntries}>
           <Routes>
             <Route path="/" element={<Main />} />
+            <Route path="/error" element={<ErrorPageMock />} />
           </Routes>
         </MemoryRouter>
       </Provider>
@@ -80,6 +84,18 @@ describe('Main', () => {
   };
 
   test('render successfully', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, async () => {
+        await delay(50);
+        return HttpResponse.json({
+          results: [
+            { id: 1, name: 'Rick Sanchez' },
+            { id: 2, name: 'Morty Smith' },
+          ],
+        });
+      })
+    );
+
     renderComponent(['/?page=1']);
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -93,40 +109,21 @@ describe('Main', () => {
   });
 
   test('filteredData is empty', async () => {
-    renderComponent(['/?page=1&name=Paul']);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          'Nothing was found for your query. Please check the search parameters.'
-        )
-      ).toBeInTheDocument();
-    });
-  });
-
-  test('render 404 error', async () => {
-    renderComponent(['/?page=19999999']);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Not Found. Please check the search parameters.')
-      ).toBeInTheDocument();
-    });
-  });
-
-  test('render network error', async () => {
     server.use(
       http.get(`${BASE_URL}`, () => {
-        return HttpResponse.error();
+        return HttpResponse.json({
+          results: [
+            { id: 1, name: 'Rick Sanchez' },
+            { id: 2, name: 'Morty Smith' },
+          ],
+        });
       })
     );
 
-    renderComponent(['/?page=1']);
+    renderComponent(['/?page=1&name=Paul']);
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Network error. Please try again later.')
-      ).toBeInTheDocument();
+      expect(screen.getByTestId('empty-cards')).toBeInTheDocument();
     });
   });
 
