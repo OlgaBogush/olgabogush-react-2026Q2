@@ -9,6 +9,7 @@ interface ICardsResults {
 }
 
 const TTL: number = Number(import.meta.env.VITE_CACHE_TTL) || 300;
+const CARDS_LIST_TAG = { type: 'Cards' as const, id: 'LIST' as const };
 
 export const apiSlice = createApi({
   reducerPath: 'api',
@@ -25,9 +26,9 @@ export const apiSlice = createApi({
                 type: 'Cards' as const,
                 id,
               })),
-              { type: 'Cards', id: 'LIST' },
+              CARDS_LIST_TAG,
             ]
-          : [{ type: 'Cards', id: 'LIST' }],
+          : [CARDS_LIST_TAG],
     }),
     getSingleCard: build.query<ICharacterState, string>({
       query: (id) => `${id}`,
