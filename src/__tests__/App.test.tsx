@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router';
 import { Provider } from 'react-redux';
 
 import { App } from '../App';
-import { store } from '../app/store';
+import { store } from '../store/store';
 import { apiSlice } from '../features/api/apiSlice';
 
 describe('App', () => {

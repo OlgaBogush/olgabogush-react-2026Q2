@@ -1,6 +1,6 @@
 import { FC, useContext } from 'react';
 import { DataItem } from './CardsList';
-import { useAppDispatch } from '../app/hooks';
+import { useAppDispatch } from '../store/hooks';
 import { removeAllItems } from '../features/favourites/favouritesSlice';
 
 import { ThemeContext } from '../context/ThemeContext';

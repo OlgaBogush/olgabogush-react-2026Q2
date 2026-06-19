@@ -1,7 +1,7 @@
 import { MouseEvent, FC } from 'react';
 import { NavLink, useSearchParams } from 'react-router';
 
-import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 
 import {
   addItemToFavourites,

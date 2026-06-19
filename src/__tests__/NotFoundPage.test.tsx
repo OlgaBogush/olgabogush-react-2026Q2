@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { store } from '../app/store';
+import { store } from '../store/store';
 import { Provider } from 'react-redux';
 
 describe('NotFoundPage', () => {

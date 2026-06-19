@@ -6,9 +6,10 @@ import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import reactPlugin from 'eslint-plugin-react';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import nextPlugin from '@next/eslint-plugin-next';
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(['dist', 'coverage', '.next']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -28,6 +29,14 @@ export default defineConfig([
       react: {
         version: 'detect',
       },
+    },
+    plugins: {
+      '@next/next': nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+
+      'react-refresh/only-export-components': 'off',
     },
   },
 ]);

@@ -1,4 +1,4 @@
-import { store } from '../app/store';
+import { store } from '../store/store';
 
 describe('redux store', () => {
   test('render', () => {

@@ -8,7 +8,7 @@ interface ICardsResults {
   results: DataItem[];
 }
 
-const TTL: number = Number(import.meta.env.VITE_CACHE_TTL) || 300;
+const TTL: number = Number(process.env.NEXT_PUBLIC_VITE_CACHE_TTL) || 300;
 const CARDS_LIST_TAG = { type: 'Cards' as const, id: 'LIST' as const };
 
 export const apiSlice = createApi({
