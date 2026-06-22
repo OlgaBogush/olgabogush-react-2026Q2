@@ -1,5 +1,7 @@
+'use client';
+
 import { FC } from 'react';
-import { useNavigate } from 'react-router';
+import { useRouter } from 'next/navigation';
 import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 
 export interface NotFoundDetailsProps {
@@ -10,10 +12,10 @@ export const NotFoundDetails: FC<NotFoundDetailsProps> = ({
   errorMessageForDetails,
 }) => {
   const currentPage = useGetCurrentPage();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const closeNotFoundDetails = () => {
-    navigate(`/?page=${currentPage}`);
+    router.replace(`/?page=${currentPage}`);
   };
 
   return (

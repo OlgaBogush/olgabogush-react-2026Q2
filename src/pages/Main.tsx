@@ -1,5 +1,8 @@
+'use client';
+
 import { FC, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';
@@ -10,34 +13,40 @@ import { getErrorMessage } from '../utils/getErrorMessage';
 import { renderContent } from '../utils/renderContent';
 
 export const Main: FC = () => {
-  const [searchParams] = useSearchParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const currentPage = useGetCurrentPage();
-  const navigate = useNavigate();
+  const activeId = searchParams?.get('id') || undefined;
 
   const { data, isLoading, isFetching, error, refetch } =
     useGetCardsQuery(currentPage);
 
   const currentUserValue =
-    searchParams.get('name') || localStorage.getItem('userValue') || '';
+    searchParams?.get('name') ||
+    (typeof window !== 'undefined' ? localStorage.getItem('userValue') : '') ||
+    '';
+
+  const hasName = searchParams?.has('name');
+  const hasPage = searchParams?.has('page');
 
   useEffect(() => {
     const savedValue = localStorage.getItem('userValue');
-    const hasName = searchParams.has('name');
-    const hasPage = searchParams.has('page');
 
     if (savedValue && !hasName && !hasPage) {
-      navigate(`/?page=${currentPage}&name=${encodeURIComponent(savedValue)}`, {
-        replace: true,
-      });
+      router.replace(
+        `${pathname}?page=${currentPage}&name=${encodeURIComponent(savedValue)}`
+      );
     }
-  }, [searchParams, navigate, currentPage]);
+  }, [router, currentPage, pathname, hasName, hasPage]);
 
   const handlePageChange = (newPage: number) => {
     if (currentUserValue) {
-      navigate(
-        `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
+      router.replace(
+        `${pathname}?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
       );
-    } else navigate(`/?page=${newPage}`);
+    } else router.replace(`${pathname}?page=${newPage}`);
   };
 
   const filteredData: DataItem[] =
@@ -48,16 +57,22 @@ export const Main: FC = () => {
   useEffect(() => {
     if (error) {
       const errorMessage = getErrorMessage(error);
-      navigate('/error', { state: { msg: errorMessage } });
+      router.replace(`/error?msg=${encodeURIComponent(errorMessage)}`);
     }
-  }, [error, navigate]);
+  }, [error, router]);
 
   return (
     <>
       <Search />
       <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
         <div className="w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
-          {renderContent({ data, filteredData, isLoading, isFetching })}
+          {renderContent({
+            data,
+            filteredData,
+            isLoading,
+            isFetching,
+            activeId,
+          })}
         </div>
         <div className="flex items-center justify-between">
           <Pagination

@@ -1,20 +1,18 @@
+import '../index.css';
+
 import { ReactNode } from 'react';
-import type { Metadata } from 'next';
+import { Providers } from './providers';
 
-interface RootLayoutProps {
-  children: ReactNode;
-}
-
-export const metadata: Metadata = {
-  title: 'My App Rick and Morty',
-  description: 'My App is a...',
+export const metadata = {
+  title: 'Rick and Morty App',
+  description: 'Migrated to Next.js',
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <div id="root">{children}</div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

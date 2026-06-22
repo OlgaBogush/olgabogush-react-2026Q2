@@ -1,6 +1,9 @@
-import { FC } from 'react';
+'use client';
 
-import { useNavigate, useParams } from 'react-router';
+import { FC } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+
 import { useGetSingleCardQuery } from '../features/api/apiSlice';
 import { Loader } from './loader/Loader';
 import { NotFoundDetails } from './NotFoundDetails';
@@ -16,7 +19,11 @@ export interface ICharacterState {
 }
 
 export const SingleCard: FC = () => {
-  const { id } = useParams<{ id: string | undefined }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const id = searchParams?.get('id') || undefined;
+
   const {
     data: card,
     isLoading,
@@ -26,11 +33,17 @@ export const SingleCard: FC = () => {
   } = useGetSingleCardQuery(id || '');
 
   const currentPage = useGetCurrentPage();
-  const navigate = useNavigate();
+  const currentName = searchParams?.get('name') || '';
 
   const closeSingleCard = () => {
-    navigate(`/?page=${currentPage}`);
+    const queryParams = new URLSearchParams();
+    queryParams.set('page', String(currentPage));
+    if (currentName) queryParams.set('name', currentName);
+
+    router.replace(`/?${queryParams.toString()}`);
   };
+
+  if (!id) return null;
 
   if (error || !card) {
     let errorMessageForDetails = `Couldn't upload detailed information. Please try again.`;
@@ -51,7 +64,14 @@ export const SingleCard: FC = () => {
         >
           x
         </button>
-        <img className="rounded-sm" src={card.image} alt={card.name} />
+        <Image
+          className="rounded-sm"
+          src={card.image || ''}
+          alt={card.name}
+          height={256}
+          width={256}
+          priority
+        />
       </div>
       <div className="flex flex-col">
         <h3 className="capitalize">{card.name}</h3>

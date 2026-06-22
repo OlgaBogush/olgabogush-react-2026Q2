@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { Link } from 'react-router';
 
 export const Footer: FC = () => {
   return (
@@ -7,19 +6,19 @@ export const Footer: FC = () => {
       <h1>The Rick and Morty</h1>
       <p>
         Developed by{' '}
-        <Link
-          to={'https://github.com/OlgaBogush'}
+        <a
+          href="https://github.com/OlgaBogush"
           className="text-gray-700 italic"
         >
           OlgaBogush
-        </Link>
+        </a>
       </p>
-      <Link
-        to={'https://rs.school/courses/reactjs'}
+      <a
+        href="https://rs.school/courses/reactjs"
         className="text-gray-700 italic"
       >
         RS School
-      </Link>
+      </a>
     </div>
   );
 };

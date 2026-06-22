@@ -1,10 +1,13 @@
-import { FC, useContext } from 'react';
-import { NavLink } from 'react-router';
+'use client';
 
+import { FC, useContext } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ThemeContext } from '../context/ThemeContext';
 
 export const Header: FC = () => {
   const context = useContext(ThemeContext);
+  const pathname = usePathname();
   if (!context) {
     return null;
   }
@@ -18,24 +21,20 @@ export const Header: FC = () => {
         <h1>The Rick and Morty</h1>
         <ul className="flex gap-4">
           <li>
-            <NavLink
-              to={'/'}
-              className={({ isActive }) =>
-                `flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
-              }
+            <Link
+              href="/"
+              className={`flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${pathname === '/' ? 'bg-gray-300' : ''}`}
             >
               Home
-            </NavLink>
+            </Link>
           </li>
           <li>
-            <NavLink
-              to={'/about'}
-              className={({ isActive }) =>
-                `flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${isActive ? 'bg-gray-300' : ''}`
-              }
+            <Link
+              href="/about"
+              className={`flex items-center justify-center min-w-20 h-8 text-base border rounded-sm border-gray-300 ${pathname === '/about' ? 'bg-gray-300' : ''}`}
             >
               About
-            </NavLink>
+            </Link>
           </li>
         </ul>
       </div>

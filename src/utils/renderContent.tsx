@@ -1,14 +1,15 @@
 import { ReactNode } from 'react';
-import { Outlet } from 'react-router';
 
 import { Loader } from '../components/loader/Loader';
 import { CardsList, DataItem } from '../components/CardsList';
+import { SingleCard } from '../components/SingleCard';
 
 interface RenderContentProps {
   data: { results: DataItem[] } | undefined;
   filteredData: DataItem[];
   isLoading: boolean;
   isFetching: boolean;
+  activeId?: string | string[];
 }
 
 export const renderContent = ({
@@ -16,16 +17,24 @@ export const renderContent = ({
   filteredData,
   isLoading,
   isFetching,
+  activeId,
 }: RenderContentProps): ReactNode => {
   if (isLoading || isFetching) {
     return <Loader />;
   }
   if (data?.results.length) {
     return (
-      <>
-        <CardsList data={filteredData} />
-        <Outlet />
-      </>
+      <div className="flex gap-6 w-full items-start justify-between">
+        <div className="flex-1">
+          <CardsList data={filteredData} />
+        </div>
+
+        {activeId && (
+          <div className="w-64 sticky top-4">
+            <SingleCard />
+          </div>
+        )}
+      </div>
     );
   }
   return null;

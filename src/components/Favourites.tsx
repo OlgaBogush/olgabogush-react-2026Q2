@@ -1,4 +1,6 @@
 import { FC, useContext } from 'react';
+import Image from 'next/image';
+
 import { DataItem } from './CardsList';
 import { useAppDispatch } from '../store/hooks';
 import { removeAllItems } from '../features/favourites/favouritesSlice';
@@ -41,10 +43,13 @@ export const Favourites: FC<FavouritesProps> = ({ favourites }) => {
             key={item.id}
             className="flex items-center justify-center gap-2 p-2 border rounded-sm border-gray-300"
           >
-            <img
+            <Image
               className="w-10 border rounded-sm border-gray-300"
               src={item.image}
               alt={item.name}
+              height={40}
+              width={40}
+              priority
             />
             <p className="text-xs capitalize">{item.name}</p>
           </li>

@@ -1,5 +1,7 @@
+'use client';
+
 import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 import { ErrorComponent } from './ErrorComponent';
 import { useLocalStorage } from '../utils/hooks/useLocalStorage';
@@ -7,18 +9,24 @@ import { useLocalStorage } from '../utils/hooks/useLocalStorage';
 export const Search: FC = () => {
   const [crash, setCrash] = useState<boolean>(false);
   const [value, setValue] = useLocalStorage('userValue');
-  const [searchParams, setSearchParams] = useSearchParams();
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
   };
 
   const handleSearchSubmit = () => {
-    localStorage.setItem('userValue', value.toLowerCase().trim());
-    setSearchParams({
-      ...Object.fromEntries(searchParams),
-      name: value.toLowerCase().trim(),
-    });
+    const currentValue = value.toLowerCase().trim();
+    localStorage.setItem('userValue', currentValue);
+
+    const currentParams = new URLSearchParams(searchParams?.toString());
+    currentParams.set('name', currentValue);
+    currentParams.set('page', '1');
+
+    router.replace(`${pathname}?${currentParams.toString()}`);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -32,7 +40,7 @@ export const Search: FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center flex-col sm:flex-row  max-w-[1240px] mx-auto w-full p-4 gap-6 border rounded-sm border-gray-300">
+    <div className="flex justify-center items-center flex-col sm:flex-row mb-4 max-w-[1240px] mx-auto w-full p-4 gap-6 border rounded-sm border-gray-300">
       {crash && <ErrorComponent />}
       <input
         className="w-full h-8 text-base px-2 border rounded-sm border-gray-300"

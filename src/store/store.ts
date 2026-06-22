@@ -3,15 +3,17 @@ import { configureStore } from '@reduxjs/toolkit';
 import { favouritesReducer } from '../features/favourites/favouritesSlice';
 import { apiSlice } from '../features/api/apiSlice';
 
-export const store = configureStore({
-  reducer: {
-    favourites: favouritesReducer,
-    [apiSlice.reducerPath]: apiSlice.reducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiSlice.middleware),
-});
+export const makeStore = () => {
+  return configureStore({
+    reducer: {
+      favourites: favouritesReducer,
+      [apiSlice.reducerPath]: apiSlice.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(apiSlice.middleware),
+  });
+};
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-export type AppStore = typeof store;
+export type AppStore = ReturnType<typeof makeStore>;
+export type RootState = ReturnType<AppStore['getState']>;
+export type AppDispatch = AppStore['dispatch'];
