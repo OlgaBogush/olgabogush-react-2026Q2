@@ -2,14 +2,18 @@
 
 import { FC, useEffect } from 'react';
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import {
+  useRouter,
+  useSearchParams,
+  usePathname,
+  notFound,
+} from 'next/navigation';
 
 import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useGetCardsQuery } from '../features/api/apiSlice';
 import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
-import { getErrorMessage } from '../utils/getErrorMessage';
 import { renderContent } from '../utils/renderContent';
 
 export const Main: FC = () => {
@@ -56,10 +60,9 @@ export const Main: FC = () => {
 
   useEffect(() => {
     if (error) {
-      const errorMessage = getErrorMessage(error);
-      router.replace(`/error?msg=${encodeURIComponent(errorMessage)}`);
+      notFound();
     }
-  }, [error, router]);
+  }, [error]);
 
   return (
     <>
