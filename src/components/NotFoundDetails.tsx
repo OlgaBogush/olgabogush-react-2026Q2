@@ -1,7 +1,7 @@
 'use client';
 
 import { FC } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 
 export interface NotFoundDetailsProps {

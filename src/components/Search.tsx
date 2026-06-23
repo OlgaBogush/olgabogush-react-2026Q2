@@ -1,7 +1,8 @@
 'use client';
 
 import { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from '@/i18n/navigation';
 
 import { ErrorComponent } from './ErrorComponent';
 import { useLocalStorage } from '../utils/hooks/useLocalStorage';

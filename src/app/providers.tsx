@@ -2,6 +2,8 @@
 
 import { FC, useState, ReactNode } from 'react';
 import { Provider } from 'react-redux';
+import { NextIntlClientProvider } from 'next-intl';
+
 import { makeStore, AppStore } from '../store/store';
 import { ThemeContext } from '../context/ThemeContext';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -50,9 +52,11 @@ export const Providers: FC<ProvidersProps> = ({ children }) => {
 
   return (
     <Provider store={store}>
-      <ErrorBoundary>
-        <AppThemeAndLayoutWrapper>{children}</AppThemeAndLayoutWrapper>
-      </ErrorBoundary>
+      <NextIntlClientProvider locale="en">
+        <ErrorBoundary>
+          <AppThemeAndLayoutWrapper>{children}</AppThemeAndLayoutWrapper>
+        </ErrorBoundary>
+      </NextIntlClientProvider>
     </Provider>
   );
 };

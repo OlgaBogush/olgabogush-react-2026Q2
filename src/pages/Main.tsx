@@ -2,12 +2,8 @@
 
 import { FC, useEffect } from 'react';
 
-import {
-  useRouter,
-  useSearchParams,
-  usePathname,
-  notFound,
-} from 'next/navigation';
+import { useSearchParams, notFound } from 'next/navigation';
+import { useRouter, usePathname } from '@/i18n/navigation';
 
 import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';

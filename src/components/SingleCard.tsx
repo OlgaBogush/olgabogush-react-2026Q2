@@ -1,7 +1,8 @@
 'use client';
 
 import { FC } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 
 import { useGetSingleCardQuery } from '../features/api/apiSlice';

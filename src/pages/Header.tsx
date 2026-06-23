@@ -1,8 +1,8 @@
 'use client';
 
 import { FC, useContext } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import { ThemeContext } from '../context/ThemeContext';
 
 export const Header: FC = () => {

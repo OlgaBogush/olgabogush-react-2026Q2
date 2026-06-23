@@ -1,7 +1,8 @@
 'use client';
 
 import { MouseEvent, FC } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import Image from 'next/image';
 
 import { useAppDispatch, useAppSelector } from '../store/hooks';
