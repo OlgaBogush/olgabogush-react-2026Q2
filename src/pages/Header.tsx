@@ -1,11 +1,11 @@
 'use client';
 
-import { FC, useContext } from 'react';
+import { useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { ThemeContext } from '../context/ThemeContext';
 
-export const Header: FC = () => {
+export default function Header() {
   const context = useContext(ThemeContext);
   const pathname = usePathname();
   if (!context) {
@@ -14,11 +14,11 @@ export const Header: FC = () => {
   const { isDarkTheme, toggleTheme } = context;
 
   return (
-    <div
+    <header
       className={`w-full max-w-[1240px] mx-auto p-6 flex items-center justify-between gap-6 border rounded-sm border-gray-300`}
     >
       <div className="flex items-center gap-6">
-        <h1>The Rick and Morty</h1>
+        <p className="font-bold">The Rick and Morty</p>
         <ul className="flex gap-4">
           <li>
             <Link
@@ -44,6 +44,6 @@ export const Header: FC = () => {
       >
         {isDarkTheme ? 'Light' : 'Dark'}
       </button>
-    </div>
+    </header>
   );
-};
+}

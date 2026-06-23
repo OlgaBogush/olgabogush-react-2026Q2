@@ -1,9 +1,7 @@
-import { FC } from 'react';
-
-export const Footer: FC = () => {
+export default function Footer() {
   return (
-    <div className="w-full max-w-[1240px] mx-auto p-6 flex justify-between items-center gap-6 border rounded-sm border-gray-300">
-      <h1>The Rick and Morty</h1>
+    <footer className="w-full max-w-[1240px] mx-auto p-6 flex justify-between items-center gap-6 border rounded-sm border-gray-300">
+      <p className="font-bold">The Rick and Morty</p>
       <p>
         Developed by{' '}
         <a
@@ -19,6 +17,6 @@ export const Footer: FC = () => {
       >
         RS School
       </a>
-    </div>
+    </footer>
   );
-};
+}

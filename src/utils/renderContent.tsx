@@ -4,8 +4,8 @@ import { Loader } from '../components/loader/Loader';
 import { CardsList, DataItem } from '../components/CardsList';
 import { SingleCard } from '../components/SingleCard';
 
-interface RenderContentProps {
-  data: { results: DataItem[] } | undefined;
+export interface RenderContentProps {
+  data: { results: DataItem[] } | undefined | null;
   filteredData: DataItem[];
   isLoading: boolean;
   isFetching: boolean;

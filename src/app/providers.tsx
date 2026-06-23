@@ -10,8 +10,8 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAppSelector } from '../store/hooks';
 import { selectFavouritesList } from '../features/favourites/favouritesSlice';
 import { Favourites } from '../components/Favourites';
-import { Header } from '../pages/Header';
-import { Footer } from '../pages/Footer';
+import Header from '../pages/Header';
+import Footer from '../pages/Footer';
 
 interface ProvidersProps {
   children: ReactNode;

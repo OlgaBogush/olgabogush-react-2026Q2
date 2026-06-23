@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { useSearchParams, notFound } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
@@ -9,22 +9,36 @@ import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useGetCardsQuery } from '../features/api/apiSlice';
-import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
 import { renderContent } from '../utils/renderContent';
 
-export const Main: FC = () => {
+interface MainProps {
+  serverData: { results: DataItem[] } | null;
+  currentPage: number;
+  currentName: string;
+}
+
+export default function Main({
+  serverData,
+  currentPage,
+  currentName,
+}: MainProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const currentPage = useGetCurrentPage();
-  const activeId = searchParams?.get('id') || undefined;
+  const urlPage = Number(searchParams?.get('page'));
+  const page = isNaN(urlPage) || urlPage < 1 ? currentPage || 1 : urlPage;
+
+  const activeIdFromUrl = searchParams?.get('id') || undefined;
 
   const { data, isLoading, isFetching, error, refetch } =
-    useGetCardsQuery(currentPage);
+    useGetCardsQuery(page);
+
+  const clientData = data || serverData;
 
   const currentUserValue =
     searchParams?.get('name') ||
+    currentName ||
     (typeof window !== 'undefined' ? localStorage.getItem('userValue') : '') ||
     '';
 
@@ -36,21 +50,21 @@ export const Main: FC = () => {
 
     if (savedValue && !hasName && !hasPage) {
       router.replace(
-        `${pathname}?page=${currentPage}&name=${encodeURIComponent(savedValue)}`
+        `${pathname}?page=${page}&name=${encodeURIComponent(savedValue)}`
       );
     }
-  }, [router, currentPage, pathname, hasName, hasPage]);
+  }, [router, page, pathname, hasName, hasPage]);
 
   const handlePageChange = (newPage: number) => {
-    if (currentUserValue) {
-      router.replace(
-        `${pathname}?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
-      );
-    } else router.replace(`${pathname}?page=${newPage}`);
+    const targetPage = isNaN(newPage) || newPage < 1 ? 1 : newPage;
+    const queryParams = new URLSearchParams(searchParams?.toString());
+    queryParams.set('page', String(targetPage));
+
+    router.replace(`${pathname}?${queryParams.toString()}`);
   };
 
   const filteredData: DataItem[] =
-    data?.results.filter((item) =>
+    clientData?.results.filter((item) =>
       item.name.toLowerCase().includes(currentUserValue.toLowerCase())
     ) || [];
 
@@ -63,21 +77,18 @@ export const Main: FC = () => {
   return (
     <>
       <Search />
-      <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
+      <main className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
         <div className="w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
           {renderContent({
-            data,
+            data: clientData,
             filteredData,
-            isLoading,
+            isLoading: data ? false : isLoading,
             isFetching,
-            activeId,
+            activeId: activeIdFromUrl,
           })}
         </div>
         <div className="flex items-center justify-between">
-          <Pagination
-            currentPage={currentPage}
-            handlePageChange={handlePageChange}
-          />
+          <Pagination currentPage={page} handlePageChange={handlePageChange} />
           <button
             className="min-w-40 h-8 text-base cursor-pointer border rounded-sm border-red-700"
             onClick={refetch}
@@ -85,7 +96,7 @@ export const Main: FC = () => {
             Refetch Cards
           </button>
         </div>
-      </div>
+      </main>
     </>
   );
-};
+}
