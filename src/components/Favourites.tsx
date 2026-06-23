@@ -6,7 +6,6 @@ import { useAppDispatch } from '../store/hooks';
 import { removeAllItems } from '../features/favourites/favouritesSlice';
 
 import { ThemeContext } from '../context/ThemeContext';
-import { downloadFile } from '../utils/downloadFile';
 
 interface FavouritesProps {
   favourites: DataItem[] | null;
@@ -25,8 +24,39 @@ export const Favourites: FC<FavouritesProps> = ({ favourites }) => {
     dispatch(removeAllItems());
   };
 
-  const handleDownloadButton = (): void => {
-    downloadFile(favourites);
+  const handleDownloadButton = async () => {
+    try {
+      const response = await fetch('/api/download-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(favourites),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate CSV on server');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+
+      link.setAttribute(
+        'download',
+        `Rick_and_Morty_${favourites.length}_items.csv`
+      );
+      link.style.visibility = 'hidden';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+    }
   };
 
   return (
