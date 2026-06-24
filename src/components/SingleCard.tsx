@@ -1,9 +1,13 @@
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 
-import { showSingleCard } from '../api/showSingleCard';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
+import { useGetSingleCardQuery } from '../features/api/apiSlice';
+import { Loader } from './loader/Loader';
+import { NotFoundDetails } from './NotFoundDetails';
+import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
-interface ICharacterState {
+export interface ICharacterState {
   name: string;
   status: string;
   gender: string;
@@ -11,47 +15,39 @@ interface ICharacterState {
   created: string;
 }
 
-const defaultCard: ICharacterState = {
-  name: '',
-  status: '',
-  gender: '',
-  image: undefined,
-  created: '',
-};
-
 export const SingleCard: FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [card, setCard] = useState(defaultCard);
+  const { id } = useParams<{ id: string | undefined }>();
+  const {
+    data: card,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetSingleCardQuery(id || '');
+
+  const currentPage = useGetCurrentPage();
   const navigate = useNavigate();
-
-  const [searchParams] = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
-
-  useEffect(() => {
-    const fetchCard = async () => {
-      try {
-        const data: ICharacterState = await showSingleCard(Number(id));
-        setCard(data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    if (id) {
-      fetchCard();
-    }
-  }, [id]);
 
   const closeSingleCard = () => {
     navigate(`/?page=${currentPage}`);
   };
 
+  if (error || !card) {
+    let errorMessageForDetails = `Couldn't upload detailed information. Please try again.`;
+    if (error) {
+      errorMessageForDetails = getErrorMessage(error);
+    }
+    return <NotFoundDetails errorMessageForDetails={errorMessageForDetails} />;
+  }
+
+  if (isLoading || isFetching) return <Loader />;
+
   return (
-    <div className="relative flex flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
-      <div className="flex items-center justify-center">
+    <div className="relative flex grow flex-col self-start w-64 p-4 gap-2 border rounded-sm border-gray-300 border-solid">
+      <div className="flex items-center justify-center p-8">
         <button
           onClick={closeSingleCard}
-          className="absolute top-0 right-1 text-gray-300 hover:text-gray-500 font-bold text-lg cursor-pointer"
+          className="absolute top-0 right-2 text-gray-300 hover:text-gray-500 font-bold text-lg cursor-pointer"
         >
           x
         </button>
@@ -69,6 +65,12 @@ export const SingleCard: FC = () => {
         </p>
         <p className="text-xs text-gray-700 italic">{card.created}</p>
       </div>
+      <button
+        className="min-w-40 h-8 text-base cursor-pointer border rounded-sm border-red-700"
+        onClick={refetch}
+      >
+        Refetch Details
+      </button>
     </div>
   );
 };

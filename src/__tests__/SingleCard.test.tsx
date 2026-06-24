@@ -1,89 +1,138 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter, Routes, Route } from 'react-router';
-import '@testing-library/jest-dom';
+import { http, HttpResponse } from 'msw';
 
+import { apiSlice } from '../features/api/apiSlice';
 import { SingleCard } from '../components/SingleCard';
-import { showSingleCard } from '../api/showSingleCard';
+import { server } from './mocks/node';
+import { NotFoundDetailsProps } from '../components/NotFoundDetails';
 
-jest.mock('../api/showSingleCard', () => ({
-  showSingleCard: jest.fn(),
+vi.mock('../components/loader/Loader', () => ({
+  Loader: () => <div>Loading Details...</div>,
 }));
 
-const mockNavigate = jest.fn();
-jest.mock('react-router', () => ({
-  ...jest.requireActual('react-router'),
-  useNavigate: () => mockNavigate,
+vi.mock('../components/NotFoundDetails', () => ({
+  NotFoundDetails: ({ errorMessageForDetails }: NotFoundDetailsProps) => (
+    <div>{errorMessageForDetails}</div>
+  ),
 }));
 
-const mockCardData = {
-  id: 1,
-  name: 'Rick Sanchez',
-  status: 'Alive',
-  gender: 'Male',
-  image: 'https://rickandmortyapi.com',
-  created: '2017-11-04T18:48:46.250Z',
+const createActualStore = () => {
+  return configureStore({
+    reducer: {
+      [apiSlice.reducerPath]: apiSlice.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(apiSlice.middleware),
+  });
 };
 
 describe('SingleCard', () => {
+  let store: ReturnType<typeof createActualStore>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+    store = createActualStore();
+    store.dispatch(apiSlice.util.resetApiState());
   });
 
-  test('renders card successfully', async () => {
-    (showSingleCard as jest.Mock).mockResolvedValue(mockCardData);
-
-    render(
-      <MemoryRouter initialEntries={['/character/1?page=3']}>
-        <Routes>
-          <Route path="/character/:id" element={<SingleCard />} />
-        </Routes>
-      </MemoryRouter>
+  const renderComponent = (initialEntries = ['/character/1']) => {
+    return render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="/character/:id" element={<SingleCard />} />
+            <Route path="/" element={<div>Main Page Content</div>} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
+  };
+
+  test('render character and action buttons', async () => {
+    server.use(
+      http.get('**/character/:id', () => {
+        return HttpResponse.json({
+          id: 1,
+          name: 'Rick Sanchez',
+          status: 'Alive',
+          gender: 'Male',
+          image: 'rick-1.jpeg',
+          created: '2017-11-04',
+        });
+      })
+    );
+
+    renderComponent(['/character/1?page=3']);
 
     await waitFor(() => {
-      expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /rick sanchez/i })
+      ).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('img')).toHaveAttribute('src', mockCardData.image);
-    expect(screen.getByText('Alive')).toBeInTheDocument();
-    expect(screen.getByText('Male')).toBeInTheDocument();
-  });
+    expect(screen.getByText(/status:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Alive/i)).toBeInTheDocument();
 
-  test('calls navigate when close button is clicked', async () => {
-    (showSingleCard as jest.Mock).mockResolvedValue(mockCardData);
+    expect(screen.getByText(/gender:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Male/i)).toBeInTheDocument();
 
-    render(
-      <MemoryRouter initialEntries={['/1?page=3']}>
-        <Routes>
-          <Route path="/:id" element={<SingleCard />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    const closeButton = await screen.findByRole('button', { name: 'x' });
+    const refetchButton = screen.getByRole('button', {
+      name: /refetch details/i,
+    });
+    fireEvent.click(refetchButton);
+    const closeButton = screen.getByRole('button', { name: 'x' });
     fireEvent.click(closeButton);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/?page=3');
+    expect(screen.getByText('Main Page Content')).toBeInTheDocument();
   });
 
-  test('error', async () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const mockError = new Error('Test API Error');
-
-    (showSingleCard as jest.Mock).mockRejectedValue(mockError);
-
-    render(
-      <MemoryRouter initialEntries={['/1']}>
-        <Routes>
-          <Route path="/:id" element={<SingleCard />} />
-        </Routes>
-      </MemoryRouter>
+  test('render error 404', async () => {
+    server.use(
+      http.get('**/character/:id', () => {
+        return new HttpResponse(null, { status: 404 });
+      })
     );
 
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(mockError);
-    });
+    renderComponent(['/character/999']);
 
-    consoleSpy.mockRestore();
+    await waitFor(() => {
+      expect(
+        screen.getByText('Not Found. Please check the search parameters.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('render network error', async () => {
+    server.use(
+      http.get('**/character/:id', () => {
+        return HttpResponse.error();
+      })
+    );
+
+    renderComponent(['/character/1']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Network error. Please try again later.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('render error 500', async () => {
+    server.use(
+      http.get('**/character/:id', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    renderComponent(['/character/1']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Server error. Please try again later.')
+      ).toBeInTheDocument();
+    });
   });
 });

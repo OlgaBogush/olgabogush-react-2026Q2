@@ -1,99 +1,73 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import '@testing-library/jest-dom';
 
 import { Search } from '../components/Search';
 
-jest.mock('../components/ErrorComponent', () => ({
-  ErrorComponent: function MockErrorComponent() {
-    return <div data-testid="error-component">Error Occurred</div>;
-  },
-}));
-
 describe('Search', () => {
-  beforeEach(() => {
-    localStorage.clear();
-    jest.spyOn(Storage.prototype, 'setItem');
-  });
-
-  test('render', () => {
-    localStorage.setItem('userValue', 'rick');
-
-    render(
-      <MemoryRouter>
+  const renderSearch = (initialEntries = ['/']) => {
+    return render(
+      <MemoryRouter initialEntries={initialEntries}>
         <Search />
       </MemoryRouter>
     );
+  };
 
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test('render placeholder and buttons', () => {
+    renderSearch();
+
+    expect(screen.getByPlaceholderText('Search character')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Test' })).toBeInTheDocument();
+  });
+
+  test('type into input', () => {
+    renderSearch();
     const input = screen.getByPlaceholderText(
       'Search character'
     ) as HTMLInputElement;
 
-    expect(input).toBeInTheDocument();
-    expect(input.value).toBe('rick');
+    fireEvent.change(input, { target: { value: 'Rick' } });
+
+    expect(input.value).toBe('Rick');
   });
 
-  test('call handleSearchSubmit', () => {
-    render(
-      <MemoryRouter>
-        <Search />
-      </MemoryRouter>
-    );
-
+  test('save value to localStorage and update url', () => {
+    renderSearch();
     const input = screen.getByPlaceholderText('Search character');
     const searchButton = screen.getByRole('button', { name: 'Search' });
 
-    fireEvent.change(input, { target: { value: '  Rick  ' } });
+    fireEvent.change(input, { target: { value: '  Morty  ' } });
     fireEvent.click(searchButton);
 
-    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'rick');
+    expect(localStorage.getItem('userValue')).toBe('morty');
   });
 
-  test('call handleSearchSubmit with Enter', () => {
-    render(
-      <MemoryRouter>
-        <Search />
-      </MemoryRouter>
-    );
-
+  test('search by pressing Enter', () => {
+    renderSearch();
     const input = screen.getByPlaceholderText('Search character');
-    fireEvent.change(input, { target: { value: 'morty' } });
-    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
-    expect(localStorage.setItem).toHaveBeenCalledWith('userValue', 'morty');
+    fireEvent.change(input, { target: { value: 'Summer' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+
+    expect(localStorage.getItem('userValue')).toBe('summer');
   });
 
-  test('not call handleSearchSubmit with other keys', () => {
-    render(
-      <MemoryRouter>
-        <Search />
-      </MemoryRouter>
-    );
+  test('render ErrorComponent', () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
-    const input = screen.getByPlaceholderText('Search character');
-    fireEvent.change(input, { target: { value: 'morty' } });
-    fireEvent.keyDown(input, { key: 'Escape', code: 'Escape' });
-
-    expect(localStorage.setItem).not.toHaveBeenCalled();
-  });
-
-  test('show ErrorComponent with push Test button', () => {
-    render(
-      <MemoryRouter>
-        <Search />
-      </MemoryRouter>
-    );
-
-    expect(screen.queryByTestId('error-component')).not.toBeInTheDocument();
-
+    renderSearch();
     const testButton = screen.getByRole('button', { name: 'Test' });
 
-    fireEvent.click(testButton);
+    expect(() => {
+      fireEvent.click(testButton);
+    }).toThrow('Test error for errorboundary');
 
-    expect(screen.getByTestId('error-component')).toBeInTheDocument();
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
+    consoleErrorSpy.mockRestore();
   });
 });

@@ -1,54 +1,51 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import { configureStore } from '@reduxjs/toolkit';
-import { cardsReducer } from '../features/cards/cardsSlice';
-import { Provider } from 'react-redux';
-
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router';
 
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { AppStore } from '../app/store';
-import { favouritesReducer } from '../features/favourites/favouritesSlice';
+import { store } from '../app/store';
+import { Provider } from 'react-redux';
 
 describe('NotFoundPage', () => {
-  let store: AppStore;
-
-  beforeEach(() => {
-    store = configureStore({
-      reducer: { cards: cardsReducer, favourites: favouritesReducer },
-    });
-  });
-
-  test('render', () => {
-    render(
+  const renderComponent = (
+    initialEntries: (string | Partial<Location>)[] = ['/error']
+  ) => {
+    return render(
       <Provider store={store}>
-        <MemoryRouter>
-          <NotFoundPage />
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="/error" element={<NotFoundPage />} />
+            <Route path="/" element={<div>Main Page Content</div>} />
+          </Routes>
         </MemoryRouter>
       </Provider>
     );
+  };
 
-    expect(screen.getByText('404 (Not Found)')).toBeInTheDocument();
-
+  test('render default error', () => {
+    renderComponent();
     expect(
-      screen.getByRole('button', { name: /go to the main page/i })
+      screen.getByText('Something went wrong. Please try again later.')
     ).toBeInTheDocument();
   });
 
-  test('redirect', () => {
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <NotFoundPage />
-        </MemoryRouter>
-      </Provider>
+  test('render custom error', () => {
+    const customState = {
+      pathname: '/error',
+      state: { msg: 'Server error. Code: 500. Please try again later.' },
+    };
+
+    renderComponent([customState]);
+
+    expect(
+      screen.getByText('Server error. Code: 500. Please try again later.')
+    ).toBeInTheDocument();
+  });
+
+  test('navigate to main page', () => {
+    renderComponent();
+    fireEvent.click(
+      screen.getByRole('button', { name: /go to the main page/i })
     );
-
-    const button = screen.getByRole('button', { name: /go to the main page/i });
-
-    fireEvent.click(button);
-
-    expect(store.getState().cards.isLoading).toBe(true);
-    expect(store.getState().cards.errorState).toBeNull();
+    expect(screen.getByText('Main Page Content')).toBeInTheDocument();
   });
 });

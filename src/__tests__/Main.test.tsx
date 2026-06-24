@@ -1,151 +1,145 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router';
 import { Provider } from 'react-redux';
-import { configureStore, UnknownAction } from '@reduxjs/toolkit';
-
-import '@testing-library/jest-dom';
+import { configureStore } from '@reduxjs/toolkit';
+import { delay, http, HttpResponse } from 'msw';
 
 import { Main } from '../pages/Main';
-import { CardsListProps } from '../components/CardsList';
+import { apiSlice } from '../features/api/apiSlice';
+import { server } from './mocks/node';
+import { BASE_URL } from '../utils/constants';
 import { PaginationProps } from '../components/Pagination';
-import { cardsReducer, resetCardsState } from '../features/cards/cardsSlice';
-import { AppStore } from '../app/store';
-import { favouritesReducer } from '../features/favourites/favouritesSlice';
-import { getCards } from '../utils/getCards';
+import { CardsListProps, DataItem } from '../components/CardsList';
 
-jest.mock('../utils/getCards', () => {
-  const original = jest.requireActual('../utils/getCards');
-  const mockFn = jest.fn();
-
-  const mockGetCards = Object.assign(mockFn, {
-    pending: 'cards/getCards/pending' as const,
-    fulfilled: 'cards/getCards/fulfilled' as const,
-    rejected: 'cards/getCards/rejected' as const,
-  });
-
-  return {
-    ...original,
-    getCards: mockGetCards,
-  };
-});
-
-jest.mock('../components/Search', () => ({
+vi.mock('../components/Search', () => ({
   Search: () => <div data-testid="search-mock">Search Mock</div>,
 }));
 
-jest.mock('../components/loader/Loader', () => ({
-  Loader: function MockLoader() {
-    return <div data-testid="loader">Loading...</div>;
-  },
-}));
-
-jest.mock('../components/CardsList', () => ({
-  CardsList: function MockCardsList({ data }: CardsListProps) {
-    return (
-      <div data-testid="cards-list">
-        {data.map((item) => (
-          <div key={item.id} data-testid={`card-${item.id}`}>
-            {item.name}
-          </div>
-        ))}
-      </div>
-    );
-  },
-}));
-
-jest.mock('../components/Pagination', () => ({
-  Pagination: function MockPagination({
-    currentPage,
-    handlePageChange,
-  }: PaginationProps) {
-    return (
-      <button
-        data-testid="next-page-btn"
-        onClick={() => handlePageChange(currentPage + 1)}
-      >
-        Next
+vi.mock('../components/Pagination', () => ({
+  Pagination: ({ currentPage, handlePageChange }: PaginationProps) => (
+    <div>
+      <span data-testid="current-page">{currentPage}</span>
+      <button data-testid="page-btn" onClick={() => handlePageChange(2)}>
+        Next Page
       </button>
-    );
-  },
+    </div>
+  ),
 }));
 
-const mockData = [{ id: 10, name: 'Pikachu' }];
+vi.mock('../components/CardsList', () => ({
+  CardsList: ({ data }: CardsListProps) => (
+    <div data-testid="cards-list-mock">
+      {data.length === 0 ? (
+        <div data-testid="empty-cards">No cards found</div>
+      ) : (
+        data.map((item: DataItem) => <div key={item.id}>{item.name}</div>)
+      )}
+    </div>
+  ),
+}));
+
+vi.mock('../components/loader/Loader', () => ({
+  Loader: () => <div>Loading...</div>,
+}));
+
+const ErrorPageMock = () => {
+  const location = useLocation();
+  const msg =
+    location.state?.msg || 'Something went wrong. Please try again later.';
+  return <div data-testid="error-page-mock">{msg}</div>;
+};
+
+const createActualStore = () => {
+  return configureStore({
+    reducer: {
+      [apiSlice.reducerPath]: apiSlice.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(apiSlice.middleware),
+  });
+};
 
 describe('Main', () => {
-  let store: AppStore;
-  const renderMain = (path = '/') =>
-    render(
+  let store: ReturnType<typeof createActualStore>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    store = createActualStore();
+    store.dispatch(apiSlice.util.resetApiState());
+  });
+
+  const renderComponent = (initialEntries = ['/']) => {
+    return render(
       <Provider store={store}>
-        <MemoryRouter initialEntries={[path]}>
+        <MemoryRouter initialEntries={initialEntries}>
           <Routes>
             <Route path="/" element={<Main />} />
-            <Route path="/error" element={<div>Error Page</div>} />
+            <Route path="/error" element={<ErrorPageMock />} />
           </Routes>
         </MemoryRouter>
       </Provider>
     );
+  };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    localStorage.clear();
-    store = configureStore({
-      reducer: { cards: cardsReducer, favourites: favouritesReducer },
+  test('render successfully', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, async () => {
+        await delay(50);
+        return HttpResponse.json({
+          results: [
+            { id: 1, name: 'Rick Sanchez' },
+            { id: 2, name: 'Morty Smith' },
+          ],
+        });
+      })
+    );
+
+    renderComponent(['/?page=1']);
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('cards-list-mock')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Rick Sanchez')).toBeInTheDocument();
+    expect(screen.getByText('Morty Smith')).toBeInTheDocument();
+  });
+
+  test('filteredData is empty', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, () => {
+        return HttpResponse.json({
+          results: [
+            { id: 1, name: 'Rick Sanchez' },
+            { id: 2, name: 'Morty Smith' },
+          ],
+        });
+      })
+    );
+
+    renderComponent(['/?page=1&name=Paul']);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-cards')).toBeInTheDocument();
     });
   });
 
-  test('render', async () => {
-    const mockAction =
-      () => async (dispatch: (action: UnknownAction) => void) => {
-        dispatch({ type: 'cards/getCards/pending' });
-        dispatch({
-          type: 'cards/getCards/fulfilled',
-          payload: mockData,
-        } as UnknownAction);
-      };
-    (getCards as unknown as jest.Mock).mockImplementation(mockAction);
+  test('render 500 error', async () => {
+    server.use(
+      http.get(`${BASE_URL}`, () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
 
-    await act(async () => {
-      renderMain('/?name=Pika');
+    renderComponent(['/?page=1']);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Server error. Please try again later.')
+      ).toBeInTheDocument();
     });
-
-    expect(screen.getByTestId('card-10')).toHaveTextContent('Pikachu');
-
-    const nextMockAction =
-      () => async (dispatch: (action: UnknownAction) => void) => {
-        dispatch({ type: 'cards/getCards/pending' });
-        dispatch({
-          type: 'cards/getCards/fulfilled',
-          payload: [],
-        } as UnknownAction);
-      };
-    (getCards as unknown as jest.Mock).mockImplementation(nextMockAction);
-
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('next-page-btn'));
-    });
-
-    act(() => {
-      store.dispatch(resetCardsState());
-    });
-
-    expect(store.getState().cards.cards).toEqual([]);
-  });
-
-  test('error', async () => {
-    const mockErrorAction =
-      () => async (dispatch: (action: UnknownAction) => void) => {
-        dispatch({ type: 'cards/getCards/pending' });
-        dispatch({
-          type: 'cards/getCards/rejected',
-          payload: 'Server Error',
-        } as UnknownAction);
-      };
-    (getCards as unknown as jest.Mock).mockImplementation(mockErrorAction);
-
-    await act(async () => {
-      renderMain('/');
-    });
-
-    expect(screen.getByText('Error Page')).toBeInTheDocument();
   });
 });

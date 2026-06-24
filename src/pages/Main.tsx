@@ -1,28 +1,22 @@
 import { FC, useEffect } from 'react';
-import { Outlet, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
-import { CardsList } from '../components/CardsList';
-import { Loader } from '../components/loader/Loader';
+import { DataItem } from '../components/CardsList';
 import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { getCards } from '../utils/getCards';
-import {
-  resetCardsState,
-  selectCards,
-  selectErrorState,
-  selectIsLoading,
-} from '../features/cards/cardsSlice';
+import { useGetCardsQuery } from '../features/api/apiSlice';
+import { useGetCurrentPage } from '../utils/hooks/useGetCurrentPage';
+import { getErrorMessage } from '../utils/getErrorMessage';
+import { renderContent } from '../utils/renderContent';
 
 export const Main: FC = () => {
-  const cards = useAppSelector(selectCards);
-  const errorState = useAppSelector(selectErrorState);
-  const isLoading = useAppSelector(selectIsLoading);
-  const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+  const currentPage = useGetCurrentPage();
   const navigate = useNavigate();
 
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const { data, isLoading, isFetching, error, refetch } =
+    useGetCardsQuery(currentPage);
+
   const currentUserValue =
     searchParams.get('name') || localStorage.getItem('userValue') || '';
 
@@ -38,12 +32,7 @@ export const Main: FC = () => {
     }
   }, [searchParams, navigate, currentPage]);
 
-  useEffect(() => {
-    dispatch(getCards(currentPage));
-  }, [dispatch, currentPage]);
-
   const handlePageChange = (newPage: number) => {
-    dispatch(resetCardsState());
     if (currentUserValue) {
       navigate(
         `/?page=${newPage}&name=${encodeURIComponent(currentUserValue)}`
@@ -51,40 +40,37 @@ export const Main: FC = () => {
     } else navigate(`/?page=${newPage}`);
   };
 
+  const filteredData: DataItem[] =
+    data?.results.filter((item) =>
+      item.name.toLowerCase().includes(currentUserValue.toLowerCase())
+    ) || [];
+
   useEffect(() => {
-    if (errorState) {
-      navigate('/error');
+    if (error) {
+      const errorMessage = getErrorMessage(error);
+      navigate('/error', { state: { msg: errorMessage } });
     }
-  }, [errorState, navigate]);
-
-  const filteredData = cards.filter((item) =>
-    item.name.toLowerCase().includes(currentUserValue.toLowerCase())
-  );
-
-  let content;
-
-  if (isLoading) {
-    content = <Loader />;
-  } else {
-    content = (
-      <>
-        <CardsList data={filteredData} />
-        <Outlet />
-      </>
-    );
-  }
+  }, [error, navigate]);
 
   return (
     <>
       <Search />
       <div className="flex flex-col gap-4 w-full max-w-[1240px] mx-auto">
-        <div className=" w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
-          {content}
+        <div className="w-full p-6 flex justify-center items-center gap-6 border rounded-sm border-gray-300">
+          {renderContent({ data, filteredData, isLoading, isFetching })}
         </div>
-        <Pagination
-          currentPage={currentPage}
-          handlePageChange={handlePageChange}
-        />
+        <div className="flex items-center justify-between">
+          <Pagination
+            currentPage={currentPage}
+            handlePageChange={handlePageChange}
+          />
+          <button
+            className="min-w-40 h-8 text-base cursor-pointer border rounded-sm border-red-700"
+            onClick={refetch}
+          >
+            Refetch Cards
+          </button>
+        </div>
       </div>
     </>
   );

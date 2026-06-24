@@ -1,27 +1,63 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
 
 import { Pagination } from '../components/Pagination';
 
-describe('Pagination Component', () => {
-  const mockSetPage = jest.fn();
+describe('Pagination', () => {
+  const mockHandlePageChange = vi.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  test('calls setPage when next or prev buttons are clicked', () => {
-    render(<Pagination currentPage={2} handlePageChange={mockSetPage} />);
+  test('display current page', () => {
+    render(
+      <Pagination currentPage={5} handlePageChange={mockHandlePageChange} />
+    );
+
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /prev/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+  });
+
+  test('block prev button on the first page', () => {
+    render(
+      <Pagination currentPage={1} handlePageChange={mockHandlePageChange} />
+    );
+
+    expect(screen.getByRole('button', { name: /prev/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /next/i })).not.toBeDisabled();
+  });
+
+  test('block next button on the last page', () => {
+    render(
+      <Pagination currentPage={42} handlePageChange={mockHandlePageChange} />
+    );
+
+    expect(screen.getByRole('button', { name: /prev/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
+  });
+
+  test('call handlePageChange when the prev button is clicked', () => {
+    render(
+      <Pagination currentPage={5} handlePageChange={mockHandlePageChange} />
+    );
+
+    const prevButton = screen.getByRole('button', { name: /prev/i });
+    fireEvent.click(prevButton);
+
+    expect(mockHandlePageChange).toHaveBeenCalledTimes(1);
+    expect(mockHandlePageChange).toHaveBeenCalledWith(4);
+  });
+
+  test('call handlePageChange when the next button is clicked', () => {
+    render(
+      <Pagination currentPage={5} handlePageChange={mockHandlePageChange} />
+    );
 
     const nextButton = screen.getByRole('button', { name: /next/i });
-    const prevButton = screen.getByRole('button', { name: /prev/i });
-
-    expect(screen.getByText('2')).toBeInTheDocument();
-
     fireEvent.click(nextButton);
-    expect(mockSetPage).toHaveBeenCalledWith(3);
 
-    fireEvent.click(prevButton);
-    expect(mockSetPage).toHaveBeenCalledWith(1);
+    expect(mockHandlePageChange).toHaveBeenCalledTimes(1);
+    expect(mockHandlePageChange).toHaveBeenCalledWith(6);
   });
 });

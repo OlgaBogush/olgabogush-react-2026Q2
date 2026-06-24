@@ -20,7 +20,8 @@ export const Pagination: FC<PaginationProps> = ({
       </button>
       <p className="text-base">{currentPage}</p>
       <button
-        className="min-w-20 h-8 text-base bg-gray-300 rounded-sm cursor-pointer"
+        className="min-w-20 h-8 text-base bg-gray-300 rounded-sm disabled:opacity-50 cursor-pointer"
+        disabled={currentPage >= 42}
         onClick={() => handlePageChange(currentPage + 1)}
       >
         next
