@@ -131,7 +131,7 @@ describe('SingleCard', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Server error. Code: 500. Please try again later.')
+        screen.getByText('Server error. Please try again later.')
       ).toBeInTheDocument();
     });
   });
