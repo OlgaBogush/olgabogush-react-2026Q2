@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 
 import Main from '../pages/Main';
 import { BASE_URL } from '@/utils/constants';
+import { getCurrentPage } from '../utils/getCurrentPage';
 
 interface PageProps {
   searchParams: Promise<{ page?: string; name?: string; id?: string }>;
@@ -24,7 +25,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
 
   const page = Number(resolvedParams.page);
-  const currentPage = isNaN(page) || page < 1 ? 1 : page;
+  const currentPage = getCurrentPage(page);
 
   const currentName = resolvedParams.name || '';
 

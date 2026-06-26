@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const headers = ['ID', 'Name', 'Image URL'].join(',');
+
 export async function POST(request: Request) {
   try {
     const favourites = await request.json();
@@ -8,7 +10,6 @@ export async function POST(request: Request) {
       return new NextResponse('No items selected for export', { status: 400 });
     }
 
-    const headers = ['ID', 'Name', 'Image URL'].join(',');
     const rows = favourites.map(({ id, name, image }) => {
       const safeName = name.replace(/"/g, '""');
       return `${id},"${safeName}","${image}"`;

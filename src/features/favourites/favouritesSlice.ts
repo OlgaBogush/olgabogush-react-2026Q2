@@ -13,8 +13,7 @@ export const favouritesSlice = createSlice({
   name: 'favourites',
   initialState,
   reducers: {
-    addItemToFavourites: (state, action: PayloadAction<DataItem>) => {
-      const { payload } = action;
+    addItemToFavourites: (state, { payload }: PayloadAction<DataItem>) => {
       const found = state.favourites.find((item) => item.id === payload.id);
       if (!found) {
         state.favourites.push(payload);

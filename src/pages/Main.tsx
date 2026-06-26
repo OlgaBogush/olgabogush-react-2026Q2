@@ -10,6 +10,7 @@ import { Search } from '../components/Search';
 import { Pagination } from '../components/Pagination';
 import { useGetCardsQuery } from '../features/api/apiSlice';
 import { renderContent } from '../utils/renderContent';
+import { getCurrentPage } from '../utils/getCurrentPage';
 
 interface MainProps {
   serverData: { results: DataItem[] } | null;
@@ -27,7 +28,7 @@ export default function Main({
   const pathname = usePathname();
 
   const urlPage = Number(searchParams?.get('page'));
-  const page = isNaN(urlPage) || urlPage < 1 ? currentPage || 1 : urlPage;
+  const page = getCurrentPage(urlPage) === 1 ? currentPage || 1 : urlPage;
 
   const activeIdFromUrl = searchParams?.get('id') || undefined;
 
@@ -56,7 +57,7 @@ export default function Main({
   }, [router, page, pathname, hasName, hasPage]);
 
   const handlePageChange = (newPage: number) => {
-    const targetPage = isNaN(newPage) || newPage < 1 ? 1 : newPage;
+    const targetPage = getCurrentPage(newPage);
     const queryParams = new URLSearchParams(searchParams?.toString());
     queryParams.set('page', String(targetPage));
 

@@ -1,19 +1,27 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
+const SOMETHING_WRONG = 'Something went wrong. Please try again later.';
+const NOT_FOUND = 'Not Found. Please check the search parameters.';
+const NETWORK_ERROR = 'Network error. Please try again later.';
+const SERVER_ERROR = 'Server error. Please try again later.';
+const CRITICAL_ERROR = 'Critical application error.';
+
 export const getErrorMessage = (
   error: FetchBaseQueryError | SerializedError
 ) => {
-  let errorMessage: string = 'Something went wrong. Please try again later.';
   if ('status' in error) {
-    if (error.status === 404) {
-      errorMessage = 'Not Found. Please check the search parameters.';
-    } else if (error.status === 'FETCH_ERROR') {
-      errorMessage = 'Network error. Please try again later.';
-    } else
-      errorMessage = `Server error. Code: ${error.status}. Please try again later.`;
-  } else if (error.message) {
-    errorMessage = `Critical application error. ${error.message}`;
+    switch (error.status) {
+      case 404:
+        return NOT_FOUND;
+      case 'FETCH_ERROR':
+        return NETWORK_ERROR;
+      default:
+        return SERVER_ERROR;
+    }
   }
-  return errorMessage;
+  if (error.message) {
+    return `${CRITICAL_ERROR} ${error.message}`;
+  }
+  return SOMETHING_WRONG;
 };
